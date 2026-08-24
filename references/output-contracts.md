@@ -24,11 +24,11 @@ A decision packet contains:
 4. **Data quality:** pass/pass_with_limits/fail, binding state, reconciliation state, critical issues, and decision impact.
 5. **Economics:** acquisition unit, revenue basis, formulas, input sources, downside/base/upside scenarios, target, marginal implication, capacity, and switch point.
 6. **Diagnosis:** observed funnel break, leading mechanism, alternatives, supporting/contradicting evidence, confounds, and discriminator.
-7. **Plan:** exact action or test, mechanism, owner, primary metric, guardrails, exposure/lag window, decision rule, monitoring, and reversal.
+7. **Plan:** exact action or test, mechanism, owner, primary metric, guardrails, exposure/lag window, decision rule, monitoring, reversal, and threshold records. Every exact threshold record includes rule/value, origin, source, derivation, scope, approval state, and approver; proposed governance cannot authorize a live money or delivery move without owner approval.
 8. **Unknowns:** material unknown, consequence, cheapest evidence, and owner.
 9. **Execution block:** required only for live execution; approval, before/after fields, financial exposure, preflight, receipt, fresh read-back, rollback, partial failures, and execution state.
 
-Validate a JSON form with assets/schemas/decision-packet.schema.json and scripts/validate_decision_packet.py.
+Validate a requested or execution-bound JSON form with assets/schemas/decision-packet.schema.json and scripts/validate_decision_packet.py. Do not duplicate a Markdown audit as JSON unless the user or workflow needs a machine-readable companion. If both exist, generate the summary from, or cross-check it against, the validated packet.
 
 ## Audit report
 
@@ -44,6 +44,8 @@ Use this order:
 - unknowns and source appendix.
 
 Do not turn every dashboard metric into an issue. Each issue must state business consequence and the evidence that supports it.
+
+Keep the main report decision-dense. Put exhaustive entity matrices, field inventories, formulas, hashes, and visual-coverage logs in an evidence appendix. Recompute executive totals and decision-state counts from the final underlying rows, and include a coverage checksum: expected, observed, unique, missing, and duplicate rows. Repetition does not satisfy a missing decision, owner, binding, or source requirement.
 
 ## Strategy and media plan
 
@@ -90,4 +92,3 @@ Return only changed or decision-relevant state:
 - next scheduled read and owner.
 
 No-change is a valid result. Do not optimize during monitoring unless separately authorized.
-

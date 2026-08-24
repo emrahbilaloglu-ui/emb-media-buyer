@@ -22,6 +22,8 @@ When scope is ambiguous, remain read-only and state the boundary. Never infer au
 
 Read each selected file completely before acting.
 
+The table is cumulative, not a reading checklist. Load only named platforms and decision needs. Read-only or prepare work does not require live-execution/API-mutation references unless the task explicitly audits execution safety or prepares an executable packet.
+
 | Need | Required references |
 |---|---|
 | Any audit, diagnosis, or recommendation | references/evidence-and-decision-policy.md; references/data-quality-and-diagnosis.md |
@@ -42,7 +44,7 @@ Read each selected file completely before acting.
 | Formal deliverable or machine-readable packet | references/output-contracts.md |
 | Volatile fact, current feature, eligibility, external claim, or disputed rule | references/runtime-source-registry.md; references/contradiction-ledger.md; consult references/source-ledger.md as the research index |
 
-Use scripts/media_math.py for deterministic economics and pacing arithmetic. Use scripts/validate_decision_packet.py before handing off a formal decision or any live change packet. Their input contracts are in references/script-usage.md.
+Use only the relevant command in scripts/media_math.py, and only after its semantic input contract is satisfied. Use scripts/validate_decision_packet.py for a requested machine-readable decision packet and before any live change packet; a Markdown audit does not need a duplicate JSON packet unless the workflow asks for one. Their input contracts are in references/script-usage.md.
 
 ## Non-negotiable reasoning rules
 
@@ -50,7 +52,7 @@ Use scripts/media_math.py for deterministic economics and pacing arithmetic. Use
 2. Keep three ledgers separate: platform-attributed performance, advertiser-owned business outcomes, and causal/incremental evidence.
 3. Do not call platform-attributed revenue profit. Reconcile currency, time zone, window, attribution, conversion definition, refunds/returns, margin, and source coverage first.
 4. Do not diagnose an ad, asset, audience, query, placement, or product until the actual delivered binding is verified at the requested grain.
-5. Do not use a fixed kill, scale, fatigue, learning, sample, budget-change, or pacing threshold as a universal rule. Derive thresholds from business economics, account history, a power/design method, or current official eligibility; cite the source.
+5. Do not use a fixed kill, scale, fatigue, learning, sample, budget-change, or pacing threshold as a universal rule. Derive thresholds from business economics, account history, a power/design method, or current official eligibility. Every exact threshold must carry its origin, source/derivation, scope, approval state, and approver.
 6. Before declaring a winner, kill, or rank from outcome counts, test whether the design can distinguish the minimum commercially meaningful effect. If it cannot, hold, monitor, pool under an approved model, or redesign; do not manufacture precision. `scripts/media_math.py power` and `noise` provide narrow planning screens, not final experiment proof.
 7. Compare equivalent entities and windows. If objective, event, bid strategy, attribution, audience, placement, budget, season, or delivery differs, name the confound and lower confidence.
 8. Treat attribution as allocation of credit, not proof of causation. Incrementality claims require a credible counterfactual.
@@ -96,7 +98,9 @@ Use exactly one primary state per scoped decision:
 - **monitor:** current state is acceptable but lag, volume, or a known risk needs a defined read;
 - **revert:** a preregistered or approved guardrail has failed and rollback is authorized.
 
-Attach confidence, evidence tier, unknowns, trigger conditions, monitoring window, and reversal condition. Confidence describes evidence quality; it is not a probability unless a named model actually produced it.
+Attach confidence, evidence rung (1-6), unknowns, trigger conditions, monitoring window, and reversal condition. Confidence describes evidence quality; it is not a probability unless a named model actually produced it.
+
+A parent-scope hold caused by missing economics, reconciliation, authorization, or measurement blocks every money- or delivery-moving child act or test. Read-only repairs may remain act; a child intervention may be documented as prepared-under-hold with the exact parent gate that must close. A separately approved bounded safety incident is the only exception.
 
 ### 6. Design the smallest useful intervention
 

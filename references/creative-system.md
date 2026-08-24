@@ -63,6 +63,12 @@ research/brief → generation or shoot job → master asset → derivative → p
 
 Verify automated combinations, dynamic fields, catalog products, crops, text transformations, generated variants, and final URLs. If delivery reporting exists only at the ad or asset-group level, do not assign outcomes to a specific hook or frame.
 
+Count ad bindings, unique platform creative IDs, unique source/render hashes, and distinct concepts separately. Ads that share a creative ID, source asset, or byte-identical rendered output are not independent creative observations even when both bindings should remain visible.
+
+Validate retrieved media by detected type, dimensions, duration where relevant, byte size, and cryptographic hash. A successful request can still return a thumbnail, error document, signed wrapper, placeholder, or repeated stub; none is proof of the source asset. Do not use a universal byte-size cutoff—inspect suspicious clusters and triangulate against rendered previews and platform bindings.
+
+For large visual inventories, use progressive inspection: inventory and contact sheet first, then a reduced-size complete scan, then full resolution for product identity, claims, offer terms, destinations, rights, or ambiguity. Record coverage and unresolved items; a contact sheet alone does not prove row-level binding.
+
 ## Test architecture
 
 Choose structure from business effect, budget, outcome density, conversion lag, creative supply, and platform capability—not from a creator’s fixed recipe.
@@ -101,4 +107,3 @@ business/customer evidence → concept map → approved brief → production →
 The media buyer owns the commercial hypothesis, test design, delivery context, and outcome read. A creative strategist/producer owns executable expression. Keep a shared taxonomy so results feed new briefs rather than only ad-level winners.
 
 For finished creative production, use a dedicated evidence-led creative skill when available, such as emb-meta-creative for Meta-specific work. Hand it product truths, approved claims, concept records, format jobs, platform/runtime requirements, destination match, and measurement plan. Do not ask generation tools to invent product geometry, testimonials, savings, results, or legal permissions.
-

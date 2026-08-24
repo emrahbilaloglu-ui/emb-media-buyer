@@ -17,6 +17,8 @@ For every source, record:
 
 Never coerce an absent metric to zero. Never merge currencies, time zones, attribution settings, or conversion definitions without an explicit transformation.
 
+When a frozen or delivered evidence package includes a manifest, verify each decision-critical file's byte size and cryptographic hash before interpretation. Treat missing, changed, duplicated, or unmanifested files as a data-quality issue. A copied package may live at a new path; content integrity, not the stored absolute path alone, determines equivalence.
+
 ## Data-quality gate
 
 Assess these dimensions:
@@ -32,6 +34,12 @@ Assess these dimensions:
 9. **Business reconciliation:** platform-attributed outcomes are compared with advertiser-owned truth on matched definitions.
 
 Classify the gate as pass, pass_with_limits, or fail. A fail on a field essential to the requested decision forces hold or measurement repair; it does not forbid unrelated descriptive work.
+
+An API success flag proves only that a request completed. Compare the requested and returned entity, row, and date coverage. Empty rows are not historical zeros until entity age, eligibility, filters, and source behavior are checked. If longer windows collapse to the same effective delivery dates or totals as a shorter window, report the actual covered dates and do not describe them as full-period history.
+
+Reconcile active-entity totals to the same-window account total and explain coverage from inactive entities, date boundaries, failed queries, or incompatible definitions. Before declaring a metric unavailable, inspect the relevant response objects and alternate supported grains; a missing field in one route or grain is not account-wide absence.
+
+Before concluding that an expected conversion is zero, enumerate every returned action and value key at that grain. Map aliases only with runtime schema, official documentation, or account-level reconciliation evidence; do not sum co-occurring aliases as independent outcomes. Reconcile the candidate mapping to a parent grain and state any material unexplained gap. Use an advertiser- or design-derived tolerance when one exists; otherwise leave materiality as an explicit judgment or unknown rather than inventing a universal percentage.
 
 ## Tracking and event checks
 
@@ -64,6 +72,8 @@ Walk the observable chain rather than reading one headline:
 
 Compute step-to-step rates with counts. The break location changes the remedy:
 
+If a deeper event count exceeds a prerequisite event, flag an event-definition, deduplication, attribution, routing, or coverage defect candidate before interpreting funnel rates.
+
 - no eligibility or delivery: policy, bid, budget, audience, schedule, feed, asset, or account constraint;
 - expensive delivery with stable downstream rates: auction/mix/quality hypothesis;
 - weak outbound intent with healthy downstream rates: proposition/creative/audience fit hypothesis;
@@ -85,6 +95,8 @@ Names are not proof. Verify immutable IDs and lineage:
 generation/source asset → master → derivative/variant → ad creative → ad → ad group/set → campaign → delivered placement/destination
 
 Account for automated combinations, dynamic creative, cropping, text variation, generated assets, catalog selection, final URLs, tracking templates, and asset replacement. If the platform only reports entity-level outcomes, do not attribute them to an individual asset.
+
+Report ad bindings, unique platform creative IDs, unique source/render hashes, and distinct concepts separately. Validate downloaded media by detected type, dimensions, duration where relevant, byte size, and hash. A thumbnail, error response, signed wrapper, repeated tiny file, or other stub is not source-asset proof even when the download request succeeded.
 
 ## Diagnostic hypotheses
 
@@ -112,4 +124,3 @@ Use one state:
 - not_applicable: no outcome reconciliation is required for this specific descriptive question.
 
 Profitability or scaling requires reconciled or explicitly bounded partially_reconciled evidence plus unit economics. Otherwise use hold, test, or monitor.
-

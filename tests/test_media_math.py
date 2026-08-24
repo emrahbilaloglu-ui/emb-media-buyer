@@ -73,7 +73,7 @@ class MediaMathTests(unittest.TestCase):
         self.assertAlmostEqual(result["derived"]["target_cac"], 75)
         self.assertEqual(result["derived"]["discounted_payback_period_first_reached"], "M1")
 
-    def test_pacing_linear_assumption(self) -> None:
+    def test_pacing_without_curve_withholds_pace_comparison(self) -> None:
         result = media_math.pacing({
             "currency": "USD",
             "total_flight_budget": 1000,
@@ -82,8 +82,18 @@ class MediaMathTests(unittest.TestCase):
             "flight_end": "2026-08-11T00:00:00+00:00",
             "as_of": "2026-08-06T00:00:00+00:00",
         })
-        self.assertAlmostEqual(result["derived"]["expected_cumulative_spend"], 500)
-        self.assertAlmostEqual(result["derived"]["pace_ratio"], 1.1)
+        self.assertFalse(result["derived"]["curve_comparison_eligible"])
+        self.assertNotIn("expected_cumulative_spend", result["derived"])
+        self.assertNotIn("pace_ratio", result["derived"])
+        self.assertNotIn("required_remaining_average_daily_spend", result["derived"])
+        self.assertAlmostEqual(
+            result["derived"]["average_daily_spend_to_exhaust_supplied_budget"],
+            90,
+        )
+        self.assertEqual(
+            result["derived"]["pace_ratio_unavailable_reason"],
+            "no approved planned_curve supplied",
+        )
         self.assertTrue(result["assumptions"])
 
     def test_pacing_custom_curve(self) -> None:
@@ -101,10 +111,17 @@ class MediaMathTests(unittest.TestCase):
         })
         self.assertAlmostEqual(result["derived"]["expected_cumulative_spend"], 400)
         self.assertAlmostEqual(result["derived"]["pace_ratio"], 1)
+        self.assertTrue(result["derived"]["curve_comparison_eligible"])
         self.assertFalse(result["assumptions"])
 
     def test_marginal_is_descriptive(self) -> None:
         result = media_math.marginal({
+            "outcome_basis": "advertiser_owned_pre_ad_business_contribution",
+            "business_contribution_source": "settled order contribution ledger",
+            "comparability_confirmed": True,
+            "comparability_evidence": "same offer, market, measurement, and completed calendar design",
+            "lag_complete": True,
+            "lag_basis": "orders settled through the approved refund and conversion lag",
             "observed_steps": [
                 {"spend": 100, "pre_ad_business_contribution": 180},
                 {"spend": 200, "pre_ad_business_contribution": 250},
@@ -114,6 +131,27 @@ class MediaMathTests(unittest.TestCase):
         self.assertAlmostEqual(result["intervals"][0]["incremental_post_ad_contribution"], -30)
         self.assertAlmostEqual(result["intervals"][1]["marginal_contribution_return_before_ad_cost"], 0.4)
         self.assertIn("not a causal response curve", result["interpretation_limits"][0])
+
+    def test_marginal_rejects_platform_value_or_open_gates(self) -> None:
+        base = {
+            "outcome_basis": "platform_attributed_revenue",
+            "business_contribution_source": "ads manager",
+            "comparability_confirmed": True,
+            "comparability_evidence": "same supplied definitions",
+            "lag_complete": True,
+            "lag_basis": "window complete",
+            "observed_steps": [
+                {"spend": 100, "pre_ad_business_contribution": 180},
+                {"spend": 200, "pre_ad_business_contribution": 250},
+            ],
+        }
+        with self.assertRaises(media_math.InputError):
+            media_math.marginal(base)
+
+        base["outcome_basis"] = "advertiser_owned_pre_ad_business_contribution"
+        base["comparability_confirmed"] = False
+        with self.assertRaises(media_math.InputError):
+            media_math.marginal(base)
 
     def test_noise_poisson_screening_band(self) -> None:
         result = media_math.noise({
@@ -140,11 +178,29 @@ class MediaMathTests(unittest.TestCase):
 
         inverse = media_math.power({
             "expected_event_count_per_arm": count,
+            "event_count_basis": "per_arm_expected_count",
+            "arm_expected_event_counts": {"arm_a": count, "arm_b": count},
             "alpha": 0.05,
             "power": 0.80,
             "sidedness": 2,
         })
         self.assertAlmostEqual(inverse["derived"]["minimum_detectable_relative_effect"], 0.20)
+
+    def test_power_inverse_rejects_pooled_or_unequal_arm_evidence(self) -> None:
+        with self.assertRaisesRegex(media_math.InputError, "event_count_basis"):
+            media_math.power({"expected_event_count_per_arm": 18})
+        with self.assertRaisesRegex(media_math.InputError, "each arm expectation"):
+            media_math.power({
+                "expected_event_count_per_arm": 18,
+                "event_count_basis": "per_arm_expected_count",
+                "arm_expected_event_counts": {"arm_a": 9, "arm_b": 9},
+            })
+        with self.assertRaisesRegex(media_math.InputError, "each arm expectation"):
+            media_math.power({
+                "expected_event_count_per_arm": 9,
+                "event_count_basis": "per_arm_expected_count",
+                "arm_expected_event_counts": {"arm_a": 7, "arm_b": 11},
+            })
 
     def test_power_duration_and_invalid_contract(self) -> None:
         result = media_math.power({

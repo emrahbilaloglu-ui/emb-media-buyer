@@ -254,7 +254,7 @@ def _parse_datetime(value: Any, name: str) -> datetime:
 
 def _validate_curve(raw: Any) -> list[tuple[float, float]]:
     if raw is None:
-        return [(0.0, 0.0), (1.0, 1.0)]
+        raise InputError("planned_curve is required for a pace-to-plan comparison")
     if not isinstance(raw, list) or len(raw) < 2:
         raise InputError("planned_curve must contain at least two points")
     points: list[tuple[float, float]] = []
@@ -301,9 +301,8 @@ def pacing(payload: dict[str, Any]) -> dict[str, Any]:
         raise InputError("as_of must fall within the flight")
     total_seconds = (end - start).total_seconds()
     elapsed_fraction = (as_of - start).total_seconds() / total_seconds
-    curve = _validate_curve(payload.get("planned_curve"))
-    planned_fraction = _interpolate(curve, elapsed_fraction)
-    expected_spend = total_budget * planned_fraction
+    raw_curve = payload.get("planned_curve")
+    curve = _validate_curve(raw_curve) if raw_curve is not None else None
     remaining_budget = total_budget - actual_spend
     remaining_days = (end - as_of).total_seconds() / 86400
 
@@ -316,19 +315,15 @@ def pacing(payload: dict[str, Any]) -> dict[str, Any]:
             "flight_start_utc": start.isoformat(),
             "flight_end_utc": end.isoformat(),
             "as_of_utc": as_of.isoformat(),
-            "planned_curve": [
+            "planned_curve": None if curve is None else [
                 {"elapsed_fraction": x, "cumulative_spend_fraction": y} for x, y in curve
             ],
         },
         "derived": {
             "elapsed_fraction": elapsed_fraction,
-            "planned_cumulative_spend_fraction": planned_fraction,
-            "expected_cumulative_spend": expected_spend,
-            "pace_ratio": None if expected_spend == 0 else actual_spend / expected_spend,
-            "spend_variance_to_curve": actual_spend - expected_spend,
             "remaining_budget": remaining_budget,
             "remaining_days": remaining_days,
-            "required_remaining_average_daily_spend": None if remaining_days == 0 else remaining_budget / remaining_days,
+            "average_daily_spend_to_exhaust_supplied_budget": None if remaining_days == 0 else remaining_budget / remaining_days,
         },
         "assumptions": [],
         "interpretation_limits": [
@@ -337,8 +332,20 @@ def pacing(payload: dict[str, Any]) -> dict[str, Any]:
             "Outcome decisions must account for conversion lag and advertiser-owned economics.",
         ],
     }
-    if payload.get("planned_curve") is None:
-        result["assumptions"].append("No planned curve supplied; linear cumulative spend was assumed.")
+    if curve is None:
+        result["derived"]["curve_comparison_eligible"] = False
+        result["derived"]["pace_ratio_unavailable_reason"] = "no approved planned_curve supplied"
+        result["assumptions"].append("No approved planned curve was supplied; no linear plan was invented.")
+    else:
+        planned_fraction = _interpolate(curve, elapsed_fraction)
+        expected_spend = total_budget * planned_fraction
+        result["derived"].update({
+            "curve_comparison_eligible": True,
+            "planned_cumulative_spend_fraction": planned_fraction,
+            "expected_cumulative_spend": expected_spend,
+            "pace_ratio": None if expected_spend == 0 else actual_spend / expected_spend,
+            "spend_variance_to_curve": actual_spend - expected_spend,
+        })
     if actual_spend > total_budget:
         result["warnings"] = ["Actual spend exceeds the supplied flight budget; verify budget definition, reporting, and overdelivery semantics."]
     return result
@@ -449,8 +456,43 @@ def power(payload: dict[str, Any]) -> dict[str, Any]:
         )
         if expected_count == 0:
             raise InputError("expected_event_count_per_arm must be > 0")
+        if payload.get("event_count_basis") != "per_arm_expected_count":
+            raise InputError(
+                "event_count_basis must be per_arm_expected_count in inverse mode; "
+                "a pooled total is not an eligible substitute"
+            )
+        arm_counts = payload.get("arm_expected_event_counts")
+        if not isinstance(arm_counts, dict):
+            raise InputError(
+                "arm_expected_event_counts must provide arm_a and arm_b in inverse mode"
+            )
+        arm_a_count = _number(
+            arm_counts.get("arm_a"),
+            "arm_expected_event_counts.arm_a",
+            minimum=0,
+        )
+        arm_b_count = _number(
+            arm_counts.get("arm_b"),
+            "arm_expected_event_counts.arm_b",
+            minimum=0,
+        )
+        if arm_a_count == 0 or arm_b_count == 0:
+            raise InputError("both arm expected event counts must be > 0")
+        if not (
+            math.isclose(arm_a_count, expected_count, rel_tol=1e-9, abs_tol=1e-9)
+            and math.isclose(arm_b_count, expected_count, rel_tol=1e-9, abs_tol=1e-9)
+        ):
+            raise InputError(
+                "equal-exposure inverse mode requires each arm expectation to equal "
+                "expected_event_count_per_arm; use a richer unequal-arm method otherwise"
+            )
         minimum_effect = math.exp(math.sqrt(coefficient / expected_count)) - 1
         inputs["expected_event_count_per_arm"] = expected_count
+        inputs["event_count_basis"] = "per_arm_expected_count"
+        inputs["arm_expected_event_counts"] = {
+            "arm_a": arm_a_count,
+            "arm_b": arm_b_count,
+        }
 
     rounded_per_arm = math.ceil(expected_count)
     derived: dict[str, Any] = {
@@ -490,6 +532,24 @@ def power(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def marginal(payload: dict[str, Any]) -> dict[str, Any]:
+    if payload.get("outcome_basis") != "advertiser_owned_pre_ad_business_contribution":
+        raise InputError(
+            "outcome_basis must be advertiser_owned_pre_ad_business_contribution; "
+            "platform-attributed revenue is not an eligible substitute"
+        )
+    contribution_source = payload.get("business_contribution_source")
+    if not isinstance(contribution_source, str) or not contribution_source.strip():
+        raise InputError("business_contribution_source must name the advertiser-owned source")
+    if payload.get("comparability_confirmed") is not True:
+        raise InputError("comparability_confirmed must be true before marginal slopes are calculated")
+    comparability_evidence = payload.get("comparability_evidence")
+    if not isinstance(comparability_evidence, str) or not comparability_evidence.strip():
+        raise InputError("comparability_evidence must document why the supplied steps are comparable")
+    if payload.get("lag_complete") is not True:
+        raise InputError("lag_complete must be true before marginal slopes are calculated")
+    lag_basis = payload.get("lag_basis")
+    if not isinstance(lag_basis, str) or not lag_basis.strip():
+        raise InputError("lag_basis must document why the supplied outcomes are complete")
     raw_steps = payload.get("observed_steps")
     if not isinstance(raw_steps, list) or len(raw_steps) < 2:
         raise InputError("observed_steps must contain at least two spend/outcome points")
@@ -519,6 +579,14 @@ def marginal(payload: dict[str, Any]) -> dict[str, Any]:
     return {
         "command": "marginal",
         "currency": payload.get("currency"),
+        "semantic_preconditions": {
+            "outcome_basis": "advertiser_owned_pre_ad_business_contribution",
+            "business_contribution_source": contribution_source.strip(),
+            "comparability_confirmed": True,
+            "comparability_evidence": comparability_evidence.strip(),
+            "lag_complete": True,
+            "lag_basis": lag_basis.strip(),
+        },
         "observed_steps": steps,
         "intervals": intervals,
         "interpretation_limits": [

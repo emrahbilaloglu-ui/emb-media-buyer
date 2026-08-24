@@ -10,7 +10,7 @@ Run from the skill directory or by absolute path:
 
 Use a single hyphen as the input path to read JSON from stdin. Output is JSON. Invalid or economically impossible inputs return exit code 2.
 
-All values must share the stated acquisition unit, currency, and revenue/contribution basis. Example numbers below demonstrate shape only; never use them as benchmarks.
+All values must share the stated acquisition unit, currency, and revenue/contribution basis. Satisfy each command's semantic preconditions before calculating; a warning cannot repair an ineligible input. Example numbers below demonstrate shape only; never use them as benchmarks.
 
 ### commerce
 
@@ -101,7 +101,7 @@ Input datetimes must include time-zone offsets. Supply an approved cumulative cu
       ]
     }
 
-Without planned_curve, the script labels linear spend as an assumption. Pace ratio is delivery versus curve, not an optimization instruction.
+Without `planned_curve`, the script returns schedule and remaining-budget facts but does not emit expected-to-curve spend, pace ratio, or variance; it states that no approved curve is available. A supplied curve must be the approved plan. Pace ratio is delivery versus that curve, not an optimization instruction.
 
 ### marginal
 
@@ -109,13 +109,19 @@ Supply at least two observed spend and pre-ad business-contribution points on co
 
     {
       "currency": "USD",
+      "outcome_basis": "advertiser_owned_pre_ad_business_contribution",
+      "business_contribution_source": "settled order and variable-cost ledger",
+      "comparability_confirmed": true,
+      "comparability_evidence": "same market, offer, measurement definition, and completed calendar design",
+      "lag_complete": true,
+      "lag_basis": "orders settled through the approved conversion and refund lag",
       "observed_steps": [
         {"spend": 1000, "pre_ad_business_contribution": 1800},
         {"spend": 1500, "pre_ad_business_contribution": 2150}
       ]
     }
 
-The output shows descriptive interval slopes and incremental post-ad contribution. It explicitly is not a causal response curve and must not be extrapolated.
+The command rejects platform-attributed revenue, unconfirmed comparability, incomplete lag, or an unnamed business-contribution source. The output shows descriptive interval slopes and incremental post-ad contribution. It explicitly is not a causal response curve and must not be extrapolated.
 
 ### noise
 
@@ -141,7 +147,18 @@ Use this to plan or invert an equal-exposure, two-arm Poisson/log-rate event-cou
       "expected_events_per_arm_per_day": 5
     }
 
-The output reports approximate required event counts per arm and total; if daily per-arm events are supplied, it also reports approximate duration. With an event count instead of an effect, it returns the implied minimum detectable relative effect. This is a transparent planning baseline, not a complete experiment design. Unequal exposure, overdispersion, clustering, repeated looks, multiple comparisons, divergent delivery, contamination, conversion lag, and revenue/value outcomes need a richer method.
+The output reports approximate required event counts per arm and total; if daily per-arm events are supplied, it also reports approximate duration. With an event count instead of an effect, it returns the implied minimum detectable relative effect. In inverse mode, `expected_event_count_per_arm` must be the count expected in **each** arm, never the pooled total. Set `event_count_basis` to `per_arm_expected_count` and provide both equal arm expectations as `arm_expected_event_counts.arm_a` and `.arm_b`; the helper rejects missing or unequal-arm evidence and any supplied pooled total that disagrees with those arm expectations. This is a transparent planning baseline, not a complete experiment design. Unequal exposure, overdispersion, clustering, repeated looks, multiple comparisons, divergent delivery, contamination, conversion lag, and revenue/value outcomes need a richer method.
+
+Inverse example:
+
+    {
+      "expected_event_count_per_arm": 66,
+      "event_count_basis": "per_arm_expected_count",
+      "arm_expected_event_counts": {"arm_a": 66, "arm_b": 66},
+      "alpha": 0.05,
+      "power": 0.80,
+      "sidedness": 2
+    }
 
 ## validate_decision_packet.py
 
@@ -155,6 +172,7 @@ Use --strict to fail on warnings as well as errors. The validator checks:
 - causal claims against evidence rung;
 - competing hypotheses;
 - economics/reconciliation for a money-moving act;
+- threshold origin, source/derivation, scope, approval state, and owner approval for proposed-governance money moves;
 - complete experiment contract for test;
 - exact approval, changes, preflight, read-back, rollback, and execution state for execute;
 - rates without denominators and ambiguous qualifiers.

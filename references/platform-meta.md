@@ -33,6 +33,8 @@ Inspect:
 - spend/outcome concentration by campaign, ad set, ad, placement, device, market, audience, time, and product;
 - policy, destination, feed/catalog, stock, asset, or account errors.
 
+Inspect final website links, shops/product-detail routes, instant experiences, and messaging extensions against destination type, conversion location, optimization event, tracking source, and advertiser-owned outcome. Route co-occurrence or configuration asymmetry is a structural risk, not proof of underdelivery or conversion loss; require route-level delivery evidence or a controlled one-variable test before assigning a causal mechanism.
+
 Do not store a universal “learning phase” conversion count or edit percentage. Read current official guidance and the account’s own delivery state.
 
 ## Automation and ranking
@@ -71,4 +73,3 @@ For A/B tests or Conversion Lift:
 - API acceptance or Ads Manager visibility does not prove delivery or outcome.
 
 Use references/runtime-source-registry.md for current official Meta sources and retrieval rules.
-

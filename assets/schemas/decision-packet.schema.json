@@ -17,7 +17,7 @@
     "unknowns"
   ],
   "properties": {
-    "schema_version": {"const": "1.0"},
+    "schema_version": {"const": "1.1"},
     "created_at": {"type": "string", "format": "date-time"},
     "operating_class": {
       "enum": ["read_only", "prepare", "execute", "monitor"]
@@ -132,7 +132,7 @@
     },
     "plan": {
       "type": "object",
-      "required": ["action", "money_moving", "owner", "primary_metric", "guardrails", "monitoring_window", "decision_rule", "reversal_condition"],
+      "required": ["action", "money_moving", "owner", "primary_metric", "guardrails", "monitoring_window", "decision_rule", "reversal_condition", "threshold_records"],
       "properties": {
         "action": {"type": "string", "minLength": 1},
         "money_moving": {"type": "boolean"},
@@ -142,6 +142,24 @@
         "monitoring_window": {"type": "string", "minLength": 1},
         "decision_rule": {"type": "string", "minLength": 1},
         "reversal_condition": {"type": "string", "minLength": 1},
+        "threshold_records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "rule", "origin", "source", "derivation", "scope", "approval_state", "approver"],
+            "properties": {
+              "name": {"type": "string", "minLength": 1},
+              "rule": {"type": "string", "minLength": 1},
+              "origin": {"enum": ["business_derived", "account_derived", "design_derived", "runtime_platform_derived", "proposed_governance"]},
+              "source": {"type": "string", "minLength": 1},
+              "derivation": {"type": "string", "minLength": 1},
+              "scope": {"type": "string", "minLength": 1},
+              "approval_state": {"enum": ["approved", "proposed", "not_required", "unknown"]},
+              "approver": {"type": ["string", "null"]}
+            },
+            "additionalProperties": true
+          }
+        },
         "safety_exception": {"type": "object"}
       },
       "additionalProperties": true

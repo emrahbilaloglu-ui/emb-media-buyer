@@ -14,7 +14,7 @@ SPEC.loader.exec_module(validator)
 
 def base_packet() -> dict:
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "created_at": "2026-08-23T12:00:00+03:00",
         "operating_class": "read_only",
         "scope": {
@@ -87,7 +87,8 @@ def base_packet() -> dict:
             "guardrails": ["No budget mutation"],
             "monitoring_window": "after complete refund lag",
             "decision_rule": "Reassess only when the gap is explained.",
-            "reversal_condition": "Not applicable; no live change."
+            "reversal_condition": "Not applicable; no live change.",
+            "threshold_records": []
         },
         "unknowns": [
             {
@@ -105,6 +106,18 @@ def valid_execute_packet() -> dict:
     packet["operating_class"] = "execute"
     packet["decision"]["state"] = "act"
     packet["plan"]["money_moving"] = True
+    packet["plan"]["threshold_records"] = [
+        {
+            "name": "approved daily budget ceiling",
+            "rule": "daily_budget must not exceed 120 TRY",
+            "origin": "business_derived",
+            "source": "approved finance downside budget",
+            "derivation": "current 100 TRY plus approved 20 TRY staged exposure",
+            "scope": "ad_set_101",
+            "approval_state": "approved",
+            "approver": "user",
+        }
+    ]
     packet["data_quality"]["state"] = "pass"
     packet["data_quality"]["reconciliation"] = "reconciled"
     packet["economics"] = {
@@ -203,6 +216,27 @@ class ValidatorTests(unittest.TestCase):
         packet["metrics"][0]["unit"] = "rate"
         _, warnings = validator.validate(packet)
         self.assertTrue(any("without count or denominator" in item for item in warnings))
+
+    def test_money_move_requires_sourced_threshold_record(self) -> None:
+        packet = valid_execute_packet()
+        packet["plan"]["threshold_records"] = []
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("sourced threshold record" in item for item in errors))
+
+    def test_unapproved_governance_threshold_cannot_move_money(self) -> None:
+        packet = valid_execute_packet()
+        threshold = packet["plan"]["threshold_records"][0]
+        threshold["origin"] = "proposed_governance"
+        threshold["approval_state"] = "proposed"
+        threshold["approver"] = None
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("owner approval" in item for item in errors))
+
+    def test_approved_threshold_requires_named_approver(self) -> None:
+        packet = valid_execute_packet()
+        packet["plan"]["threshold_records"][0]["approver"] = None
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("approver is required" in item for item in errors))
 
 
 if __name__ == "__main__":

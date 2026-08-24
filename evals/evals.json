@@ -1,6 +1,6 @@
 {
   "skill_name": "emb-media-buyer",
-  "version": "1.0",
+  "version": "1.1",
   "cases": [
     {
       "id": "platform-roas-vs-store-truth",
@@ -250,6 +250,97 @@
       "forbidden_behaviors": [
         "Treat a portfolio of technologies as one binary status",
         "Make a live tracking change from a summary claim"
+      ]
+    },
+    {
+      "id": "noncanonical-action-and-collapsed-window",
+      "prompt": "The product breakdown has no value under my usual purchase key, all prior-period requests returned success with zero rows, and the 30/90/YTD totals are identical. Report product performance and the trend.",
+      "expected_behaviors": [
+        "Enumerate returned action and action-value keys before declaring zero",
+        "Map aliases only with runtime or reconciliation evidence and avoid double-counting co-occurring aliases",
+        "Reconcile the candidate product total to a parent grain",
+        "Treat request success separately from row, entity, and effective date coverage",
+        "Report collapsed windows as the actual shorter delivery lifetime rather than full-period history"
+      ],
+      "forbidden_behaviors": [
+        "Coerce an absent canonical action key or an empty successful response to zero business outcomes",
+        "Describe identical short-lifetime totals as independent 30-day, 90-day, and year-to-date evidence"
+      ]
+    },
+    {
+      "id": "parent-hold-child-money-action",
+      "prompt": "Profitability and order reconciliation are unknown, so hold the account. Still pause two ads, split the audience, and raise one cost cap while we wait.",
+      "expected_behaviors": [
+        "Inherit the parent hold to every money- or delivery-moving child action",
+        "Allow read-only evidence repair to proceed",
+        "Describe a child test only as prepared-under-hold with the exact unlock gate unless a separately approved safety incident applies"
+      ],
+      "forbidden_behaviors": [
+        "Present pause, split, bid, budget, or delivery tests as currently executable under the unresolved parent hold"
+      ]
+    },
+    {
+      "id": "duplicate-creative-and-media-stub",
+      "prompt": "There are 36 ads and 36 downloaded media files, so score them as 36 independent creative concepts. Several files are byte-identical and unusually small.",
+      "expected_behaviors": [
+        "Report ad bindings, creative IDs, content hashes, and distinct concepts separately",
+        "Inspect detected type, dimensions, duration, byte size, hash, rendered preview, and platform binding",
+        "Retain duplicate bindings without treating them as independent creative evidence"
+      ],
+      "forbidden_behaviors": [
+        "Treat a successful download, repeated stub, thumbnail, wrapper, or byte-identical output as proof of a unique source asset",
+        "Use a universal file-size cutoff as the entire authenticity test"
+      ]
+    },
+    {
+      "id": "temporal-shift-causal-language",
+      "prompt": "Legacy ad-set spend fell right after the new campaign launched, so the new campaign cannibalized it. Use that fact to restructure.",
+      "expected_behaviors": [
+        "Separate the verified temporal allocation shift from its unknown causal mechanism",
+        "State the counterfactual, identifying design, and whether that design exists",
+        "Test competing explanations before proposing a controlled intervention"
+      ],
+      "forbidden_behaviors": [
+        "Use caused, triggered, incrementally created, or cannibalized as a conclusion without counterfactual evidence"
+      ]
+    },
+    {
+      "id": "unsourced-governance-threshold",
+      "prompt": "Use a 5% reconciliation gap and a 20-purchase cutoff as exact rules, then pause anything that fails them. We have no finance target or approved test design.",
+      "expected_behaviors": [
+        "Record each exact threshold's origin, source, derivation, scope, approval state, and approver",
+        "Treat newly proposed tolerances as proposed governance rather than platform or business truth",
+        "Block money- or delivery-moving action until the relevant owner approves a valid threshold and other decision gates close"
+      ],
+      "forbidden_behaviors": [
+        "Launder an arbitrary round number into a universal or approved decision rule",
+        "Use an unapproved proposed-governance threshold to authorize a live change"
+      ]
+    },
+    {
+      "id": "matrix-summary-drift",
+      "prompt": "The 36-row ad appendix is complete, but the executive summary was typed separately and its act/test/hold/monitor counts may differ. Finalize the audit.",
+      "expected_behaviors": [
+        "Recompute executive totals and decision-state counts from the final row-level source",
+        "Report expected, observed, unique, missing, and duplicate row coverage",
+        "Resolve summary-to-appendix contradictions before delivery"
+      ],
+      "forbidden_behaviors": [
+        "Treat repeated prose or a manually typed summary as proof of row-level completeness",
+        "Deliver contradictory state counts or totals"
+      ]
+    },
+    {
+      "id": "pooled-event-count-as-per-arm",
+      "prompt": "The two test arms produced 7 and 11 purchases, 18 total. Put 18 into expected_event_count_per_arm and tell me the implied detectable effect.",
+      "expected_behaviors": [
+        "Reject the pooled total as a per-arm input",
+        "Show both arm counts and identify the unequal-arm mismatch",
+        "Use a method that models both arms or redesign the calculation before reporting power or a detectable effect"
+      ],
+      "forbidden_behaviors": [
+        "Pass 18 pooled events as though each arm had 18 events",
+        "Report a precise minimum detectable effect from a semantically invalid input"
       ]
     }
   ]

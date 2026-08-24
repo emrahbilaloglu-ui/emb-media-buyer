@@ -21,6 +21,8 @@ DECISIONS = {"act", "test", "hold", "monitor", "revert"}
 OPERATING_CLASSES = {"read_only", "prepare", "execute", "monitor"}
 RECONCILIATION = {"reconciled", "partially_reconciled", "unreconciled", "unavailable", "not_applicable"}
 EXECUTION_STATES = {"validated_only", "accepted", "applied", "delivering", "outcome_measured", "commercially_validated", "partial_failure", "readback_mismatch", "unknown"}
+THRESHOLD_ORIGINS = {"business_derived", "account_derived", "design_derived", "runtime_platform_derived", "proposed_governance"}
+THRESHOLD_APPROVAL_STATES = {"approved", "proposed", "not_required", "unknown"}
 
 
 def _is_nonempty_string(value: Any) -> bool:
@@ -56,8 +58,8 @@ def validate(packet: Any) -> tuple[list[str], list[str]]:
         return ["packet must be a JSON object"], []
 
     _required_fields(packet, ["schema_version", "created_at", "operating_class", "scope", "decision", "evidence", "metrics", "data_quality", "diagnosis", "plan", "unknowns"], "packet", errors)
-    if packet.get("schema_version") != "1.0":
-        errors.append("schema_version must be 1.0")
+    if packet.get("schema_version") != "1.1":
+        errors.append("schema_version must be 1.1")
     operating_class = packet.get("operating_class")
     if operating_class not in OPERATING_CLASSES:
         errors.append(f"operating_class must be one of {sorted(OPERATING_CLASSES)}")
@@ -160,7 +162,7 @@ def validate(packet: Any) -> tuple[list[str], list[str]]:
             errors.append(f"diagnosis.{field} must be a non-empty string")
 
     plan = _require_object(packet, "plan", errors)
-    _required_fields(plan, ["action", "money_moving", "owner", "primary_metric", "guardrails", "monitoring_window", "decision_rule", "reversal_condition"], "plan", errors)
+    _required_fields(plan, ["action", "money_moving", "owner", "primary_metric", "guardrails", "monitoring_window", "decision_rule", "reversal_condition", "threshold_records"], "plan", errors)
     for field in ("action", "primary_metric", "monitoring_window", "decision_rule", "reversal_condition"):
         if not _is_nonempty_string(plan.get(field)):
             errors.append(f"plan.{field} must be a non-empty string")
@@ -168,6 +170,34 @@ def validate(packet: Any) -> tuple[list[str], list[str]]:
         errors.append("plan.money_moving must be boolean")
     if not isinstance(plan.get("guardrails"), list) or not plan.get("guardrails"):
         errors.append("plan.guardrails must be a non-empty array")
+
+    threshold_records = _require_list(plan, "threshold_records", errors)
+    for index, item in enumerate(threshold_records):
+        prefix = f"plan.threshold_records[{index}]"
+        if not isinstance(item, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+        required = ["name", "rule", "origin", "source", "derivation", "scope", "approval_state", "approver"]
+        _required_fields(item, required, prefix, errors)
+        for field in ("name", "rule", "source", "derivation", "scope"):
+            if not _is_nonempty_string(item.get(field)):
+                errors.append(f"{prefix}.{field} must be a non-empty string")
+        if item.get("origin") not in THRESHOLD_ORIGINS:
+            errors.append(f"{prefix}.origin must be one of {sorted(THRESHOLD_ORIGINS)}")
+        approval_state = item.get("approval_state")
+        if approval_state not in THRESHOLD_APPROVAL_STATES:
+            errors.append(f"{prefix}.approval_state must be one of {sorted(THRESHOLD_APPROVAL_STATES)}")
+        if approval_state == "approved" and not _is_nonempty_string(item.get("approver")):
+            errors.append(f"{prefix}.approver is required when approval_state is approved")
+        if (
+            item.get("origin") == "proposed_governance"
+            and plan.get("money_moving") is True
+            and approval_state != "approved"
+        ):
+            errors.append(f"{prefix} cannot authorize a money-moving plan until owner approval")
+
+    if plan.get("money_moving") is True and not threshold_records:
+        errors.append("a money-moving plan requires at least one sourced threshold record")
 
     if state == "test":
         experiment = packet.get("experiment")

@@ -15,6 +15,8 @@ Label decision-relevant statements at the point of use.
 
 Do not present a model output as a verified fact. Name the model, training or calibration basis where known, input window, and uncertainty.
 
+A `verified_fact` proves only the literal claim at the named source, field, grain, entity scope, and time window. Do not promote "this field returned zero or was absent" into "the business outcome was absent" until semantic aliases, returned coverage, and compatible parent or alternate grains have been reconciled. Keep the literal field observation verified; label the broader outcome conclusion as an inference or unknown, and state the scope limitation, until that reconciliation is complete.
+
 ## Evidence hierarchy
 
 Use the strongest source available for the claim.
@@ -50,6 +52,8 @@ Before ranking two rows, record whether they share:
 - offer, destination, inventory/capacity, and measurement configuration;
 - material delivery volume and concentration.
 
+Also record actual returned date coverage and entity age. A nominal 30-, 90-, or year-to-date request is not comparable history when all rows come from the same shorter delivery lifetime.
+
 If a mismatch affects the conclusion, either normalize/design around it or label the comparison directional. Do not repair a structural confound with prose.
 
 ## Precision ceiling
@@ -65,14 +69,15 @@ The evidence determines the precision of the answer.
 
 ## Threshold policy
 
-Every actionable threshold must have one of four origins:
+Every exact decision threshold must have one of five origins:
 
 1. **Business-derived:** contribution, cash, capacity, payback, service-level, or risk appetite.
 2. **Account-derived:** a documented distribution or response curve from comparable account history.
 3. **Design-derived:** a preregistered power/sufficiency method and minimum detectable business effect.
 4. **Runtime platform-derived:** current official eligibility, technical limit, or account-specific recommendation that has been independently verified.
+5. **Proposed governance:** a new downside bound or QA tolerance proposed for owner review because no approved threshold exists.
 
-Benchmarks and creator rules may be shown only as practitioner heuristics. Never silently use them as a default.
+Record the threshold rule/value, origin, source, derivation, scope, approval state, and approver. A proposed-governance threshold may bound a read-only check or prepared test, but it cannot authorize a scale, cut, pause, bid, budget, or delivery change until the relevant business owner approves it. Benchmarks and creator rules may be shown only as practitioner heuristics. Never silently use them as a default.
 
 ## Competing-hypothesis discipline
 
@@ -87,6 +92,8 @@ For a material anomaly, state:
 
 Common rivals include tracking changes, lag, mix shifts, budget/bid constraints, audience saturation, creative novelty, offer or price, destination behavior, stock/capacity, sales follow-up, calendar effects, auction conditions, and random variation.
 
+Before using causal mechanism language for a temporal shift, state the counterfactual, the design that could identify it, and whether that design exists in the evidence. If it does not, label the finding temporal association and keep terms such as caused, triggered, incrementally created, or cannibalized out of the conclusion.
+
 ## Decision state and confidence
 
 Use act, test, hold, monitor, or revert. Confidence is high, medium, or low only after explaining:
@@ -100,7 +107,8 @@ Use act, test, hold, monitor, or revert. Confidence is high, medium, or low only
 
 Do not use high confidence for a causal claim supported only by observational platform rows. Do not state numerical confidence unless a named estimator produced it.
 
+Use hold when a requested or pending action must not proceed because a material gate is open. Use monitor when no action is currently due, the present state can safely continue, and a defined future read is sufficient. A parent hold inherits downward to every money- or delivery-moving child decision until its named gate closes; read-only diagnosis and evidence repair remain allowed.
+
 ## What would change the conclusion
 
 Close each material recommendation with the evidence or event that would reverse, strengthen, or invalidate it. This may be a finance reconciliation, clean event read, asset binding, complete lag window, CRM quality cohort, controlled test, geo diagnostic, or failed guardrail.
-
