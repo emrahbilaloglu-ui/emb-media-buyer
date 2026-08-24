@@ -1,0 +1,8 @@
+interface:
+  display_name: "EMB Media Buyer"
+  short_description: "EMB evidence-led paid media decisions"
+  brand_color: "#132A24"
+  default_prompt: "Use $emb-media-buyer to audit my paid media, reconcile business economics, and produce an evidence-led decision plan."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,106 @@
+{
+  "skill_name": "emb-media-buyer",
+  "purpose": "Trigger-boundary evaluation set. Run each query in a clean context and compare emb-media-buyer activation with the expected label.",
+  "queries": [
+    {
+      "id": "trigger-meta-audit",
+      "should_trigger": true,
+      "query": "Audit our Meta ad account and tell me what to scale, hold, or test."
+    },
+    {
+      "id": "trigger-google-pmax",
+      "should_trigger": true,
+      "query": "PMax ROAS rose but total store sales did not. Diagnose the discrepancy."
+    },
+    {
+      "id": "trigger-tiktok-budget",
+      "should_trigger": true,
+      "query": "Build a safe TikTok Ads budget and pacing plan for our launch."
+    },
+    {
+      "id": "trigger-media-plan",
+      "should_trigger": true,
+      "query": "Create a cross-channel paid media plan for ecommerce with CAC and payback targets."
+    },
+    {
+      "id": "trigger-incrementality",
+      "should_trigger": true,
+      "query": "Design a geo lift test to measure whether paid search is incremental."
+    },
+    {
+      "id": "trigger-creative-testing",
+      "should_trigger": true,
+      "query": "Design a Meta creative testing system tied to contribution, not CTR alone."
+    },
+    {
+      "id": "trigger-live-change",
+      "should_trigger": true,
+      "query": "Raise only campaigns 123 and 456 by 15 dollars per day and verify the live values."
+    },
+    {
+      "id": "trigger-lead-quality",
+      "should_trigger": true,
+      "query": "LinkedIn CPL is down but qualified pipeline is worse. What should we do?"
+    },
+    {
+      "id": "trigger-mmm-allocation",
+      "should_trigger": true,
+      "query": "Review this MMM budget recommendation before we move spend across channels."
+    },
+    {
+      "id": "trigger-programmatic",
+      "should_trigger": true,
+      "query": "Audit our DSP plan for fees, viewability, fraud, and incremental reach."
+    },
+    {
+      "id": "no-trigger-finished-ad-image",
+      "should_trigger": false,
+      "query": "Generate a finished photorealistic product ad image with a transparent background."
+    },
+    {
+      "id": "no-trigger-video-edit",
+      "should_trigger": false,
+      "query": "Edit this video, remove the background, and add animated captions."
+    },
+    {
+      "id": "no-trigger-shopify-theme",
+      "should_trigger": false,
+      "query": "Fix the Liquid code in my Shopify product template."
+    },
+    {
+      "id": "no-trigger-seo",
+      "should_trigger": false,
+      "query": "Research organic keywords and write an SEO content brief."
+    },
+    {
+      "id": "no-trigger-email",
+      "should_trigger": false,
+      "query": "Build a Klaviyo abandoned-cart email flow."
+    },
+    {
+      "id": "no-trigger-product-pricing",
+      "should_trigger": false,
+      "query": "Choose the retail price for this product from competitor listings."
+    },
+    {
+      "id": "no-trigger-financial-model",
+      "should_trigger": false,
+      "query": "Build a company-wide three-statement financial model."
+    },
+    {
+      "id": "no-trigger-crm-cleanup",
+      "should_trigger": false,
+      "query": "Deduplicate these CRM contacts and normalize their phone numbers."
+    },
+    {
+      "id": "no-trigger-landing-page-code",
+      "should_trigger": false,
+      "query": "Implement this landing page design in React."
+    },
+    {
+      "id": "no-trigger-general-statistics",
+      "should_trigger": false,
+      "query": "Explain the difference between a confidence interval and a prediction interval."
+    }
+  ]
+}
