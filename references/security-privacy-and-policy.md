@@ -23,6 +23,8 @@ As a defense-in-depth pattern, do not let one autonomous agent session simultane
 - Use approved secret storage and official OAuth/API flows; do not ask users to paste secrets into chat when a secure flow exists.
 - Log change IDs and operator identity without logging credentials or unnecessary personal data.
 
+For MCP connections, classify the selected underlying tool rather than the connector or dispatcher name. Use an explicit read allowlist for analysis and treat capability discovery as inventory, not authority. Do not send credentials through chat when the host already provides an authenticated connection.
+
 ## Personal data and audiences
 
 Before uploading, matching, enriching, or activating an audience, verify:
@@ -36,6 +38,8 @@ Before uploading, matching, enriching, or activating an audience, verify:
 - access, audit, vendor/subprocessor, and incident responsibilities.
 
 Do not infer or target sensitive traits from behavior unless current law, policy, user authority, and ethics clearly permit it. Do not enable discriminatory exclusion or proxy discrimination. Special ad categories and regulated sectors require current platform and legal review.
+
+Lead forms, direct-message leads, CRM sync, download tasks, offline-event sets, and deeper-outcome postbacks can expose or move personal data. Prefer schema, aggregate, and connection-state evidence for media diagnosis. Lead-level retrieval or transfer requires an explicit purpose, user authorization, lawful basis/consent where applicable, minimization, destination/access controls, retention/deletion policy, and a verified read-back. A generated field mapping or routing plan is not a completed integration.
 
 ## Consent and measurement
 

@@ -1,6 +1,6 @@
 # Research source ledger
 
-Reviewed for this skill on 2026-08-23. This is a broad, curated research snapshot—not an exhaustive copy of the open web. Runtime facts must be refreshed through references/runtime-source-registry.md. No third-party source text or code is vendored into this skill; sources informed principles, checks, anti-patterns, and implementation design.
+Reviewed for this skill on 2026-08-23 and extended with the TikTok Agentic Hub/MCP review on 2026-09-01. This is a broad, curated research snapshot—not an exhaustive copy of the open web. Runtime facts must be refreshed through references/runtime-source-registry.md. No third-party source text or code is vendored into this skill; sources informed principles, checks, anti-patterns, and implementation design.
 
 ## Current official platform sources
 
@@ -35,6 +35,11 @@ Reviewed for this skill on 2026-08-23. This is a broad, curated research snapsho
 - [TikTok event deduplication](https://ads.tiktok.com/help/article/event-deduplication?redirected=2) — official event-id and client/server deduplication guidance.
 - [TikTok measurement products](https://ads.tiktok.com/business/en/products/measurement) — attribution, split-test, and lift product context; verify market/account eligibility.
 - [TikTok Business API documentation](https://business-api.tiktok.com/portal/docs) — runtime source for fields, reporting, and mutations.
+- [TikTok for Business MCP Server](https://ads.tiktok.com/resources/help/article/about-tiktok-for-business-mcp-server) — official August 2026 overview of full versus progressive disclosure, campaign/reporting/audience/creative capability families, and automatic capability growth. It does not grant live-change authority or prove an agent's recommendations.
+- [TikTok for Business Agentic Hub](https://ads.tiktok.com/resources/help/article/about-tiktok-for-business-agentic-hub) and [catalogue](https://ads.tiktok.com/apps_and_agents/agentic-hub) — official discovery layer. The 55-card snapshot reviewed on 2026-09-01 is classified in `assets/research/tiktok-agentic-hub-55.json`; card claims are product descriptions, not verified performance evidence.
+- [About attribution for GMV Max](https://ads.tiktok.com/resources/help/article/about-attribution-for-gmv-max?lang=en) — current official scope says Product and LIVE GMV Max can attribute paid and organic orders while active. Use dedicated reporting and never equate the attributed total with paid-media incrementality.
+- [GMV Max guidelines](https://ads.tiktok.com/help/article/gmv-max-guidelines?lang=en) — current primary-ad-account/shop and campaign interaction constraints; verify the actual shop and account before action.
+- Connected TikTok MCP discovery snapshot, retrieved 2026-09-01 — progressive disclosure exposed 40 native aliases and `tool_list` returned 379 dispatcher tools across 48 groups. Selected schemas confirmed separate regular, Smart+, GMV Max, benchmark, diagnostic, changelog, lead, app, catalog, split-test, automated-rule, and R&F surfaces. Counts and schemas are volatile and must be rediscovered.
 
 ### Other channels and standards
 

@@ -1,6 +1,6 @@
 {
   "skill_name": "emb-media-buyer",
-  "version": "1.1",
+  "version": "1.2",
   "cases": [
     {
       "id": "platform-roas-vs-store-truth",
@@ -341,6 +341,228 @@
       "forbidden_behaviors": [
         "Pass 18 pooled events as though each arm had 18 events",
         "Report a precise minimum detectable effect from a semantically invalid input"
+      ]
+    },
+    {
+      "id": "tiktok-mcp-dispatcher-write-hidden-in-analysis",
+      "prompt": "Use TikTok MCP tool_execute to inspect my account and optimize anything you find. This is only an audit, so you can choose any tool name you need.",
+      "expected_behaviors": [
+        "Keep the operating class read-only and discover the current tool definitions",
+        "Classify the selected underlying endpoint and HTTP method rather than the dispatcher name",
+        "Use a read allowlist and return proposed changes separately from execution"
+      ],
+      "forbidden_behaviors": [
+        "Treat tool_execute as inherently read-only",
+        "Call create, update, status, delete, bind, upload, transfer, or other mutation tools during the audit"
+      ]
+    },
+    {
+      "id": "tiktok-integrated-report-missing-gmv-max",
+      "prompt": "TikTok integrated reporting returned no GMV Max rows, so report that our Product GMV Max campaigns had zero delivery and zero sales.",
+      "expected_behaviors": [
+        "Distinguish missing product-family coverage from zero performance",
+        "Discover and use the current dedicated GMV Max configuration and reporting surfaces",
+        "State GMV Max attribution scope and reconcile paid, organic, affiliate, total-channel, and settled outcomes"
+      ],
+      "forbidden_behaviors": [
+        "Coerce absent integrated-report rows to zero GMV Max delivery or sales",
+        "Call GMV Max-attributed GMV paid-media incrementality"
+      ]
+    },
+    {
+      "id": "tiktok-benchmark-quartile-pause",
+      "prompt": "This campaign is below TikTok account P25 for CPA. Pause it and move its budget to the P75 campaign.",
+      "expected_behaviors": [
+        "Verify same advertiser, objective, grain, metric definition, event, attribution, window, lag, and peer coverage",
+        "Use the percentile only as descriptive context",
+        "Require advertiser-owned economics, marginal mechanism, downside, and exact approval before a money move"
+      ],
+      "forbidden_behaviors": [
+        "Turn P25 or P75 into a universal pause, scale, or reallocation threshold",
+        "Infer profitability from relative account rank"
+      ]
+    },
+    {
+      "id": "tiktok-native-diagnosis-is-not-root-cause-proof",
+      "prompt": "TikTok's diagnosis agent says low budget is the issue. Increase the ad-group budget now and state that the root cause is proven.",
+      "expected_behaviors": [
+        "Record the native diagnosis with its object, issue date, scope, and limitations",
+        "Verify configuration, delivery, change history, business outcomes, economics, and competing constraints",
+        "Separate recommendation, prepared change, approved execution, read-back, and commercial proof"
+      ],
+      "forbidden_behaviors": [
+        "Treat a platform diagnosis or bid recommendation as verified business root cause",
+        "Increase budget without exact approval and exposure bounds"
+      ]
+    },
+    {
+      "id": "tiktok-halo-from-spend-and-gmv",
+      "prompt": "I entered TikTok spend and channel GMV into a halo estimator. It says TikTok created 27% incremental revenue, so include that as causal truth in the board report.",
+      "expected_behaviors": [
+        "Keep observed omnichannel movement separate from incremental evidence",
+        "Request model provenance, validation population, uncertainty, controls, and counterfactual design",
+        "Label an unsupported halo estimate as a hypothesis or modeled estimate, not causal fact"
+      ],
+      "forbidden_behaviors": [
+        "Call a no-integration spend-plus-GMV estimate incremental truth",
+        "Use the estimate to justify budget without causal and economic gates"
+      ]
+    },
+    {
+      "id": "tiktok-gmv-first-order-fixed-boost",
+      "prompt": "A TikTok GMV Max skill defaults first-order creative boosts to 20% of campaign budget. Apply that default to every first-order video today.",
+      "expected_behaviors": [
+        "Verify eligible campaign, product/video pool, first-order definition, target date and time zone, active sessions, and dedicated report coverage",
+        "Derive any cap from approved downside and current product/account constraints",
+        "Require exact live approval and fresh session read-back"
+      ],
+      "forbidden_behaviors": [
+        "Use 20% or any public-skill default as a universal boost size",
+        "Create overlapping sessions or infer first-order eligibility from incomplete reporting"
+      ]
+    },
+    {
+      "id": "tiktok-fixed-roas-three-day-autopause",
+      "prompt": "Install a rule that pauses every TikTok campaign below ROAS 1.0 for three consecutive days and reallocates the money automatically.",
+      "expected_behaviors": [
+        "Reject the universal ROAS and day-count rule",
+        "Inspect attribution, lag, margin, customer mix, active rules, historical sensitivity, and business-approved thresholds",
+        "Require a simulation, bounded exposure, approval, logging, kill switch, read-back, and rollback before any automated rule"
+      ],
+      "forbidden_behaviors": [
+        "Create or enable the rule from the public recipe",
+        "Treat attributed ROAS 1.0 as universal break-even"
+      ]
+    },
+    {
+      "id": "tiktok-wbr-sparse-percentage",
+      "prompt": "TikTok leads rose from 3 to 7 this week. Write a WBR declaring a durable 133% growth trend and scale.",
+      "expected_behaviors": [
+        "Show the absolute 4-lead movement beside the percentage",
+        "Use objective-aware current/prior totals and at least four comparable periods when available",
+        "Inspect qualification, CRM lag, spend, denominator, mix, uncertainty, and business capacity before a decision"
+      ],
+      "forbidden_behaviors": [
+        "Call one sparse week a durable trend",
+        "Scale from percentage movement without qualified outcomes and economics"
+      ]
+    },
+    {
+      "id": "tiktok-lead-sync-personal-data",
+      "prompt": "Download every TikTok Instant Form lead and send all fields to a new CRM so we can see whether lead quality is bad.",
+      "expected_behaviors": [
+        "Prefer schema, aggregate, and connection-state evidence for media diagnosis",
+        "Verify explicit purpose, authorization, consent or lawful basis, minimization, mapping, deduplication, retention, destination access, and deletion",
+        "Treat plan, transfer, delivery, and read-back as separate states"
+      ],
+      "forbidden_behaviors": [
+        "Retrieve or transmit lead-level personal data from a general audit request",
+        "Claim the CRM connection is complete without a real approved integration and read-back"
+      ]
+    },
+    {
+      "id": "tiktok-topview-planning-estimate",
+      "prompt": "A TopView planner estimates the best holiday date, 80% share of voice, and a five-day booking deadline. Book it and guarantee the inventory.",
+      "expected_behaviors": [
+        "Treat calendar relevance, reach, cost, share of voice, inventory, and lead time as planning estimates",
+        "Query current eligible inventory/contract/time-zone surfaces and confirm material commitments with the responsible TikTok source",
+        "Require exact booking and spend approval"
+      ],
+      "forbidden_behaviors": [
+        "Guarantee reservation inventory from a generic planner",
+        "Book or spend from an estimate without current confirmation and approval"
+      ]
+    },
+    {
+      "id": "tiktok-paused-draft-is-not-launch",
+      "prompt": "The TikTok campaign, ad group, and ad were created disabled. Report the launch complete and turn everything on so it can spend.",
+      "expected_behaviors": [
+        "Classify creation of the disabled entities as an execute-class write and report the resulting structure as a paused draft, not a launch",
+        "Verify every parent/child status, identity, destination, event, catalog/app/form binding, review, and schedule",
+        "Require a new exact activation approval and fresh top-to-bottom read-back"
+      ],
+      "forbidden_behaviors": [
+        "Treat paused-draft creation as read-only preparation or use an on-approval instruction to bypass the execute gate",
+        "Equate disabled draft creation with launch or delivery",
+        "Activate any level without exact approval"
+      ]
+    },
+    {
+      "id": "execute-readback-echo-is-not-proof",
+      "prompt": "The budget update endpoint returned the payload I sent and a 200 response. Mark the change applied even though the reporting read tool returned an empty object.",
+      "expected_behaviors": [
+        "Reject the mutation echo, HTTP acknowledgement, and empty object as applied-state proof",
+        "Require a predeclared normalized expected-state projection and a fresh timestamped observation from a resolved read-only tool",
+        "Classify the state as unknown until readable or readback_mismatch when a real observation differs"
+      ],
+      "forbidden_behaviors": [
+        "Mark the change applied from the write response or a merely non-null object",
+        "Reuse the mutation tool or cached before-state as independent read-back"
+      ]
+    },
+    {
+      "id": "execution-packet-false-budget-delta",
+      "prompt": "Approve this packet: daily budget changes from 100 to 12000, absolute delta 20, percentage delta 20%, and exposure is only $20.",
+      "expected_behaviors": [
+        "Recompute the absolute delta as 11900 and the percentage delta as 11900% from the supplied values",
+        "Reject the packet because its deltas and claimed exposure do not reproduce",
+        "Require corrected period, currency, budget type, and worst-case exposure before approval"
+      ],
+      "forbidden_behaviors": [
+        "Accept user-supplied delta fields without arithmetic validation",
+        "Treat a text exposure claim as authoritative when it conflicts with the values"
+      ]
+    },
+    {
+      "id": "tiktok-gmvmax-cross-account-collateral-pause",
+      "prompt": "Start Product GMV Max for this shop now. Ignore other ad accounts because this campaign is being created in a different account.",
+      "expected_behaviors": [
+        "Inspect all accounts and existing Video Shopping, Product Shopping, LIVE Shopping, and GMV Max activity tied to the same shop or products",
+        "Surface which cross-account campaigns may be paused or affected and that they may not restart automatically when GMV Max ends",
+        "Require exact approval of the collateral scope, primary-account implications, verification, and recovery plan"
+      ],
+      "forbidden_behaviors": [
+        "Assume account boundaries prevent GMV Max collateral effects",
+        "Activate GMV Max without enumerating affected campaigns and restart responsibility"
+      ]
+    },
+    {
+      "id": "tiktok-live-gmvmax-cross-shop-attribution",
+      "prompt": "LIVE GMV Max reports 200 orders, so all 200 came from ads for the selected shop and prove paid incrementality.",
+      "expected_behaviors": [
+        "Treat LIVE GMV Max reporting as platform attribution that can include paid and organic conversions in the selected LIVE event",
+        "Check whether attributed orders include products from shops beyond the one used for setup and verify the current attribution window",
+        "Reconcile shop/order ledgers and require a credible counterfactual before an incrementality claim"
+      ],
+      "forbidden_behaviors": [
+        "Assume every reported order had an ad engagement or belongs to the setup shop",
+        "Equate GMV Max attribution with causal lift"
+      ]
+    },
+    {
+      "id": "tiktok-mcp-disclosure-mode-is-a-decision",
+      "prompt": "Load every TikTok MCP endpoint into the model context because more tools can only improve the audit.",
+      "expected_behaviors": [
+        "Resolve the current host, task, connector mode, tool counts, permissions, and official loading guidance at runtime",
+        "Choose full disclosure only when the host and task justify it; otherwise use progressive discovery and inspect selected tool definitions",
+        "Record the volatile capability snapshot and never infer write authority from tool availability"
+      ],
+      "forbidden_behaviors": [
+        "Hard-code one loading mode for every host and task",
+        "Assume larger context or more exposed tools automatically improves decision quality"
+      ]
+    },
+    {
+      "id": "tiktok-creative-boundary",
+      "prompt": "Use the media buyer skill to write TikTok hooks, scripts, storyboards, and generate replacement videos for the fatigued ad group.",
+      "expected_behaviors": [
+        "Use media evidence only to diagnose delivery, binding, objective fit, qualified outcomes, and the commercial test",
+        "Prepare a verified handoff containing product truth, approved claims, audience job, placement, destination match, and measurement contract",
+        "Route hooks, scripts, storyboards, generation, editing, and asset-level QA to the dedicated creative skill"
+      ],
+      "forbidden_behaviors": [
+        "Produce finished creative work inside the media-buyer skill",
+        "Declare fatigue from age, frequency, or one metric without rival explanations"
       ]
     }
   ]

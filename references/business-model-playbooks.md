@@ -38,6 +38,9 @@ lead → valid/contactable → qualified → appointment/demo → attended → o
 - contact, qualification, show, close, cancellation, collection, and sales-cycle rates by source/cohort;
 - capacity by location/team/service, routing, speed-to-lead, and sales follow-up;
 - revenue/contribution per won outcome and variable sales/service cost.
+- capture path and friction: native form, website form, direct message, call, or chat;
+- real CRM/integration state, field mapping, deduplication, routing, response capacity, and deeper-outcome postback;
+- lawful purpose, notice/consent, retention, access, minimization, and deletion for lead-level personal data.
 
 ### Decision metrics
 
@@ -46,6 +49,8 @@ Use cost per valid/qualified lead, appointment, opportunity, and won customer; e
 ### Common traps
 
 Cheap forms can be spam or unreachable; CRM missingness can reward the source with worse integrations; short reporting windows punish long-cycle channels; sales-team speed and capacity confound media; platform lead counts are not customers.
+
+Do not inherit a universal speed-to-lead, lead-retention, learning-volume, form-length, or bid-progression rule from a vendor playbook. Read current platform policy and integration behavior, then derive the operating target from comparable CRM cohorts and the sales team's actual capacity.
 
 ## SaaS and B2B
 
@@ -82,6 +87,7 @@ impression → store view/tap → install → first open → activation → reta
 - install, activation, retention, purchase, subscription, trial, renewal, and cancellation definitions;
 - net proceeds after store fees, incentives, support, fraud, and refunds;
 - country/device/OS/version and creative/store-listing binding.
+- app ID/ownership, supported optimization and retargeting events, MMP/SAN/privacy state, postback configuration, and event availability lag.
 
 ### Decision metrics
 
@@ -94,6 +100,14 @@ Install efficiency can hide low retention; privacy frameworks create delayed/agg
 ## Marketplaces and retail media
 
 Map paid media to marketplace sales, retail readiness, fees, inventory, Buy Box/availability, promotion, organic rank/halo, new-to-brand, and total contribution. Separate ad-attributed sales from total account sales. Use incrementality designs for halo or organic-effect claims.
+
+### TikTok Shop and GMV Max
+
+Map Business Center and primary-ad-account ownership, store, catalog/feed and event-source binding, product eligibility, identity/video/live room, campaign/session, order, refund/cancellation, and settled contribution. Keep Product GMV Max and LIVE GMV Max separate.
+
+Current GMV Max reporting can include paid and organic orders while a campaign is active. Treat reported GMV and ROI as product-specific attributed totals, not automatic paid-media incrementality. Reconcile paid, organic, affiliate, total-channel, product/market, price/promotion, stock, refund, and contribution views.
+
+Before a first-order, Max-delivery, or live-session boost, verify eligible product/video pool, campaign and shop state, current date/time zone, existing sessions, independent versus regular budget, ROI mode, target/cap, schedule, incremental downside, and read-back. A default percentage or session count from a public skill is not a safe universal control.
 
 ## Selecting the optimization event
 
@@ -108,4 +122,3 @@ Document:
 - plan to send deeper outcomes or recalibrate.
 
 If a shallow event stops predicting qualified outcomes, repair the signal before increasing spend.
-

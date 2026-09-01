@@ -15,7 +15,7 @@ For every operation, record:
 - atomicity mode, partial-failure behavior, validation/dry-run support, and response semantics;
 - idempotency mechanism if documented, otherwise the duplicate-detection/read-before-retry method;
 - reversibility class, exact compensating operation, and non-reversible side effects;
-- expected response, independent read-back query, success predicate, and timeout state.
+- expected response, independent read-back tool/query, a normalized expected-state projection, exact success predicate, and timeout state.
 
 Do not put unrelated edits in one request. Do not split dependent edits merely to make partial success easier.
 
@@ -62,10 +62,14 @@ Primary references: [Marketing APIs](https://developers.facebook.com/docs/market
 
 Do not borrow Google or Meta semantics. For the exact current endpoint, verify mutation support, validation behavior, status transitions, partial failure, rate limits, auditability, and read-back fields in the official portal and live response schema.
 
+With TikTok for Business MCP, inspect the selected native alias or dispatcher tool's current full definition before preparing a write. A progressive-disclosure dispatcher can reach both reads and destructive operations; classify the underlying endpoint and HTTP method. Re-run capability discovery because tool names, schemas, defaults, immutable fields, allowlist requirements, pagination, and product-specific reporting can change.
+
+New campaign structures should be explicitly created in a paused/disabled state when the current endpoint supports it. Do not trust a status default. Creating even a paused object is a write and therefore execute-class: it requires exact approval, resolved write/read tools, preflight, read-back, and rollback or compensation. Verify the campaign, ad-group, and ad states separately, plus parent/child eligibility, identity, destination, catalog/store/app/form binding, and any auto-budget or automated-rule interaction. A paused draft is not activation authority.
+
 If primary documentation cannot establish dry-run, atomicity, idempotency, or reversibility:
 
 1. mark each property `unknown`;
-2. prepare the smallest reversible or paused-draft operation;
+2. prepare a packet for the smallest reversible or paused-draft operation without sending it;
 3. require exact confirmation of the uncertainty and exposure;
 4. stop if a reliable independent read-back cannot be defined.
 
@@ -85,6 +89,8 @@ A timeout, transport error, lost connection, or malformed response can occur aft
 Exponential backoff handles transient capacity errors; it does not solve duplicate or ambiguous mutations.
 
 ## Read-back matrix
+
+Before mutation, define the smallest normalized projection that proves the approved fields and dependencies, for example `{"campaign_id": "123", "daily_budget": 120, "status": "PAUSED"}`. After mutation, fetch that projection through a resolved read-only tool in a fresh query. A mutation response, cached preflight value, echoed payload, missing timestamp, empty object, or merely non-null response is not proof. `applied` and later states require exact equality between expected and observed projections; a difference is `readback_mismatch`, and an unavailable read is `unknown`.
 
 Verify at least these layers when relevant:
 

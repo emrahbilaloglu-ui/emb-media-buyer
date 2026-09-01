@@ -14,6 +14,7 @@ For every source, record:
 - filters, exclusions, deduplication keys, consent mode, and modeled-data status;
 - coverage, missingness, revision behavior, and known incidents;
 - join keys to campaign, ad group/set, ad, creative, product, landing page, customer, or opportunity.
+- product-family/report route, pagination/task state, row limit, and expected versus observed entity count.
 
 Never coerce an absent metric to zero. Never merge currencies, time zones, attribution settings, or conversion definitions without an explicit transformation.
 
@@ -50,6 +51,7 @@ Inspect the complete path from user action to reported outcome:
 - event name, value, currency, content/product identifiers, and timestamp;
 - primary versus secondary optimization status;
 - domain/app/source ownership and destination consistency;
+- final URL, redirect chain, UTM naming/encoding/uniqueness, analytics channel mapping, and preservation through the landing path;
 - offline conversion imports and CRM stage mapping;
 - test events versus production events;
 - duplicate, missing, delayed, out-of-order, or modeled events;

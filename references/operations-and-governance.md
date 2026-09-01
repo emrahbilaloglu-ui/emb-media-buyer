@@ -70,6 +70,8 @@ Look for account/billing errors, disapprovals, zero or abnormal spend, budget/pa
 
 Use complete equivalent windows. Reconcile platform, business, and causal ledgers; inspect concentration and funnel breaks; review contribution and marginal response; evaluate experiments against preregistration; inspect creative concept coverage and production throughput; review capacity and calendar.
 
+For a WBR, use the canonical contract in `references/account-review-and-optimization.md` and route the next action to its actual owner.
+
 ### Strategic reviews
 
 Revisit targets, customer/market mix, channel role, response curves, incrementality, MMM/experiments, creative/offer roadmap, measurement debt, platform dependency, and forecast scenarios.
@@ -96,4 +98,3 @@ Do not erase or rewrite historical decision evidence to make the incident disapp
 Lead with business outcome, decision, risk, and owner. Keep platform metrics as explanatory drivers. Include source/window/currency/attribution beside every material number, distinguish fact/inference/unknown, and show what changed since the prior comparable read.
 
 Report “no decision” when the evidence is not ready. Activity, number of optimizations, or number of creatives launched is not performance by itself.
-

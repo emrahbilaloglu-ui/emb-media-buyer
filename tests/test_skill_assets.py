@@ -1,6 +1,7 @@
 import json
 import re
 import unittest
+from collections import Counter
 from pathlib import Path
 
 
@@ -12,6 +13,9 @@ class SkillAssetTests(unittest.TestCase):
         body = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
         self.assertLessEqual(len(body.splitlines()), 500)
         self.assertRegex(body, r"(?m)^name: emb-media-buyer$")
+        description = re.search(r"(?m)^description: (.+)$", body)
+        self.assertIsNotNone(description)
+        self.assertLessEqual(len(description.group(1)), 1024)
 
         referenced = set(re.findall(r"references/[a-z0-9-]+\.md", body))
         self.assertGreaterEqual(len(referenced), 10)
@@ -25,7 +29,7 @@ class SkillAssetTests(unittest.TestCase):
         cases = payload["cases"]
         ids = [case["id"] for case in cases]
         self.assertEqual(len(ids), len(set(ids)))
-        self.assertGreaterEqual(len(cases), 15)
+        self.assertEqual(len(cases), 44)
         for case in cases:
             self.assertTrue(case["expected_behaviors"])
             self.assertTrue(case["forbidden_behaviors"])
@@ -48,9 +52,53 @@ class SkillAssetTests(unittest.TestCase):
             SKILL_ROOT / "evals" / "evals.json",
             SKILL_ROOT / "evals" / "trigger-evals.json",
             SKILL_ROOT / "assets" / "schemas" / "decision-packet.schema.json",
+            SKILL_ROOT / "assets" / "research" / "tiktok-agentic-hub-55.json",
         ]:
             with self.subTest(path=path.name):
                 self.assertIsInstance(json.loads(path.read_text(encoding="utf-8")), dict)
+
+    def test_tiktok_agentic_hub_ledger_is_complete_and_bounded(self):
+        payload = json.loads(
+            (
+                SKILL_ROOT
+                / "assets"
+                / "research"
+                / "tiktok-agentic-hub-55.json"
+            ).read_text(encoding="utf-8")
+        )
+        skills = payload["skills"]
+        self.assertEqual(payload["catalog_count"], 55)
+        self.assertEqual(len(skills), 55)
+        self.assertEqual([item["index"] for item in skills], list(range(1, 56)))
+        self.assertEqual(len({item["name"] for item in skills}), 55)
+        self.assertTrue(
+            all(item["decision"] in {"adopt", "adapt", "route", "exclude"} for item in skills)
+        )
+        self.assertTrue(all(item["capability"].strip() for item in skills))
+        self.assertEqual(
+            Counter(item["decision"] for item in skills),
+            Counter({"adopt": 12, "adapt": 28, "route": 12, "exclude": 3}),
+        )
+        by_index = {item["index"]: item for item in skills}
+        for index in (5, 17, 24, 29, 39, 48):
+            self.assertEqual(by_index[index]["decision"], "adapt")
+
+    def test_new_operational_assets_are_linked(self):
+        skill = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        for relative_path in [
+            "references/account-review-and-optimization.md",
+            "references/tiktok-mcp-operations.md",
+            "scripts/account_review.py",
+        ]:
+            self.assertIn(relative_path, skill)
+            self.assertTrue((SKILL_ROOT / relative_path).is_file())
+
+    def test_ci_runs_deterministic_validation(self):
+        workflow = SKILL_ROOT / ".github" / "workflows" / "validate.yml"
+        self.assertTrue(workflow.is_file())
+        body = workflow.read_text(encoding="utf-8")
+        self.assertIn("python3 -m unittest discover", body)
+        self.assertIn("Draft202012Validator.check_schema", body)
 
 
 if __name__ == "__main__":

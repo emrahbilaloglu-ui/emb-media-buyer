@@ -53,6 +53,11 @@
       "query": "Audit our DSP plan for fees, viewability, fraud, and incremental reach."
     },
     {
+      "id": "trigger-tiktok-mcp-gmv-wbr",
+      "should_trigger": true,
+      "query": "Use TikTok MCP read-only to audit Smart+ and GMV Max, reconcile Shop orders, and prepare an objective-aware weekly business review."
+    },
+    {
       "id": "no-trigger-finished-ad-image",
       "should_trigger": false,
       "query": "Generate a finished photorealistic product ad image with a transparent background."
@@ -101,6 +106,11 @@
       "id": "no-trigger-general-statistics",
       "should_trigger": false,
       "query": "Explain the difference between a confidence interval and a prediction interval."
+    },
+    {
+      "id": "no-trigger-tiktok-hooks-storyboards",
+      "should_trigger": false,
+      "query": "Write ten TikTok hooks, three scripts, and shot-by-shot storyboards for this product."
     }
   ]
 }

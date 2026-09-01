@@ -26,7 +26,9 @@ A decision packet contains:
 6. **Diagnosis:** observed funnel break, leading mechanism, alternatives, supporting/contradicting evidence, confounds, and discriminator.
 7. **Plan:** exact action or test, mechanism, owner, primary metric, guardrails, exposure/lag window, decision rule, monitoring, reversal, and threshold records. Every exact threshold record includes rule/value, origin, source, derivation, scope, approval state, and approver; proposed governance cannot authorize a live money or delivery move without owner approval.
 8. **Unknowns:** material unknown, consequence, cheapest evidence, and owner.
-9. **Execution block:** required only for live execution; approval, before/after fields, financial exposure, preflight, receipt, fresh read-back, rollback, partial failures, and execution state.
+9. **Execution block:** required only for live execution; approval, before/after fields, recomputed deltas, structured maximum financial exposure with currency/model/period/horizon/derivation, preflight, receipt, fresh read-back, rollback, partial failures, and execution state.
+
+When applicable, add the schema blocks `account_review`, `benchmark`, `funnel`, and `external_outcome_binding`. Add `capability_manifest` whenever tool semantics are decision-relevant; it is mandatory for `execute` and must contain the current resolved write tool plus an independent read tool. Use `capability_snapshot` for host/loading-mode provenance and discovery counts. Execute read-back declares the independent read tool and a normalized expected-state projection; `applied` or later requires a fresh observed projection that matches exactly. These blocks preserve current MCP/tool semantics, account coverage, descriptive peer context, stage definitions, and advertiser-owned outcome provenance without making every read-only packet carry irrelevant fields.
 
 Validate a requested or execution-bound JSON form with assets/schemas/decision-packet.schema.json and scripts/validate_decision_packet.py. Do not duplicate a Markdown audit as JSON unless the user or workflow needs a machine-readable companion. If both exist, generate the summary from, or cross-check it against, the validated packet.
 
@@ -46,6 +48,30 @@ Use this order:
 Do not turn every dashboard metric into an issue. Each issue must state business consequence and the evidence that supports it.
 
 Keep the main report decision-dense. Put exhaustive entity matrices, field inventories, formulas, hashes, and visual-coverage logs in an evidence appendix. Recompute executive totals and decision-state counts from the final underlying rows, and include a coverage checksum: expected, observed, unique, missing, and duplicate rows. Repetition does not satisfy a missing decision, owner, binding, or source requirement.
+
+For a platform account audit, also show product-family coverage: regular, automated/Smart+, shop or GMV, app, lead, search, reservation, and active automated-rule surfaces as applicable. Distinguish zero, empty, unavailable, unsupported, excluded, and unqueried states.
+
+## Account diagnosis
+
+Include:
+
+- exact symptom, entity, issue time, objective, event, window, time zone, and lag state;
+- configuration/status/automation and mix changes aligned to the symptom;
+- native diagnostic or recommendation output with its scope and limitations;
+- verified leading mechanism, at least two rivals, contradictory evidence, and cheapest discriminator;
+- business consequence and money at risk with definition and uncertainty;
+- immediate technical repair, controlled media intervention, or routed owner;
+- decision state, threshold provenance, and execution authority.
+
+Do not present a native agent answer, health score, benchmark quartile, or temporal coincidence as root-cause proof.
+
+## Benchmark readout
+
+State peer definition, advertiser/population, objective, grain, metric, direction, market, product/business model, automation/bid/event/attribution/window, lag, peer count, distinct values, missing/ineligible entities, method, and retrieval latency. Show empirical distribution and entity percentile as context. Keep business economics, causal evidence, and decision state separate; a percentile is not a kill/scale threshold.
+
+## Funnel readout
+
+Show stage definitions, identity/count semantics, source, deduplication, window, lag, counts, denominators, transition rates, comparable baseline, segment mix, leading leak hypothesis, alternatives, and scenario arithmetic. Do not use fixed severity bands or call event-count ratios user conversion rates without valid nesting.
 
 ## Strategy and media plan
 

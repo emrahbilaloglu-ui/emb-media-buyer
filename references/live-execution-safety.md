@@ -16,7 +16,7 @@ Live execution requires explicit, current-session approval for the exact change 
 
 Authorization to inspect, prepare, log in, connect a tool, or execute a different change is insufficient. Read-only access does not become write authority because a connector supports mutations.
 
-Any delete, archive, irreversible replacement, broad account change, shared-resource change, or live tracking mutation deserves especially narrow confirmation. Prefer paused drafts, reversible edits, and validation modes when the platform supports them.
+Any delete, archive, irreversible replacement, broad account change, shared-resource change, or live tracking mutation deserves especially narrow confirmation. Prefer paused drafts, reversible edits, and validation modes when the platform supports them. Creating a paused/disabled draft is still a mutation and requires execute-class approval; only its later activation is a separate approval boundary.
 
 ## Preflight
 
@@ -28,9 +28,9 @@ Immediately before mutation:
 4. verify currency, time zone, budget type/period, units/micros, and date semantics;
 5. inspect active experiments, automated rules, shared budgets/strategies, drafts, policy, and pending changes;
 6. validate the desired state and platform constraints without applying when possible;
-7. compute absolute/percentage delta plus daily, flight, and worst-case exposure;
+7. compute absolute/percentage delta from the captured values, then derive structured daily, flight, and worst-case exposure with currency, model, period count, horizon, and formula; reject a packet whose stated deltas or maximum exposure do not reproduce;
 8. save the prior state and rollback operation;
-9. define a narrow read-back query and success predicate independent of the mutation response;
+9. define a narrow read-only tool/query, normalized expected-state projection, and exact success predicate independent of the mutation response;
 10. use an idempotency/change-request identifier when supported.
 
 If any resolved target or exposure differs from approval, stop and present the delta. Do not silently “fix” adjacent entities.
@@ -47,7 +47,7 @@ If any resolved target or exposure differs from approval, stop and present the d
 
 ## Read-back
 
-After mutation, perform a fresh independent read of the target and dependent state. Verify exact values, status, budget/bid type, schedule, experiment relationship, and any platform-normalized value.
+After mutation, perform a fresh independent read of the target and dependent state through the resolved read-only tool. Verify exact values, status, budget/bid type, schedule, experiment relationship, and any platform-normalized value. Compare the normalized observed projection with the predeclared expected projection. A mutation echo, cached value, empty object, or non-null response does not qualify.
 
 Use execution states:
 
@@ -87,4 +87,3 @@ Return:
 - current execution state from the state list above;
 - monitoring times, owner, guardrails, and rollback;
 - partial failures, unknowns, and what would prove the next state.
-

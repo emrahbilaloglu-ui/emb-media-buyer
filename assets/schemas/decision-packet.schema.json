@@ -17,7 +17,7 @@
     "unknowns"
   ],
   "properties": {
-    "schema_version": {"const": "1.1"},
+    "schema_version": {"const": "1.2"},
     "created_at": {"type": "string", "format": "date-time"},
     "operating_class": {
       "enum": ["read_only", "prepare", "execute", "monitor"]
@@ -102,6 +102,103 @@
         "reconciliation": {"enum": ["reconciled", "partially_reconciled", "unreconciled", "unavailable", "not_applicable"]},
         "binding": {"enum": ["verified", "partial", "unverified", "not_applicable"]},
         "critical_issues": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": true
+    },
+    "capability_manifest": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["tool", "method", "mutability", "retrieved_at"],
+        "properties": {
+          "tool": {"type": "string", "minLength": 1},
+          "endpoint": {"type": ["string", "null"]},
+          "method": {"type": "string", "minLength": 1},
+          "mutability": {"enum": ["read", "write", "mixed_dispatcher", "unknown"]},
+          "permissions": {"type": ["string", "null"]},
+          "limits_or_latency": {"type": "array", "items": {"type": "string"}},
+          "retrieved_at": {"type": "string", "format": "date-time"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "capability_snapshot": {
+      "type": "object",
+      "required": ["connector", "host", "loading_mode", "retrieved_at"],
+      "properties": {
+        "connector": {"type": "string", "minLength": 1},
+        "host": {"type": "string", "minLength": 1},
+        "loading_mode": {"type": "string", "minLength": 1},
+        "guidance_source": {"type": ["string", "null"]},
+        "guidance_retrieved_at": {"type": ["string", "null"], "format": "date-time"},
+        "native_tool_count": {"type": ["integer", "null"], "minimum": 0},
+        "discovered_tool_count": {"type": ["integer", "null"], "minimum": 0},
+        "group_count": {"type": ["integer", "null"], "minimum": 0},
+        "retrieved_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": true
+    },
+    "account_review": {
+      "type": "object",
+      "required": ["mode", "coverage", "objective_routing"],
+      "properties": {
+        "mode": {"enum": ["cold_start", "launch_check", "mid_flight_diagnosis", "full_account_audit", "benchmark", "weekly_business_review", "portfolio_decision", "monitor"]},
+        "maturity_evidence": {"type": "array", "items": {"type": "string"}},
+        "coverage": {
+          "type": "object",
+          "required": ["expected", "observed", "unique", "missing", "duplicate"],
+          "properties": {
+            "expected": {"type": ["integer", "null"], "minimum": 0},
+            "observed": {"type": "integer", "minimum": 0},
+            "unique": {"type": "integer", "minimum": 0},
+            "missing": {"type": ["integer", "null"], "minimum": 0},
+            "duplicate": {"type": "integer", "minimum": 0},
+            "product_families": {"type": "object"}
+          },
+          "additionalProperties": true
+        },
+        "objective_routing": {"type": "string", "minLength": 1},
+        "native_diagnostics": {"type": "array", "items": {"type": "object"}},
+        "change_map": {"type": "array", "items": {"type": "object"}}
+      },
+      "additionalProperties": true
+    },
+    "benchmark": {
+      "type": "object",
+      "required": ["peer_definition", "metric", "method", "peer_count", "decision_use"],
+      "properties": {
+        "peer_definition": {"type": "string", "minLength": 1},
+        "metric": {"type": "string", "minLength": 1},
+        "method": {"type": "string", "minLength": 1},
+        "peer_count": {"type": "integer", "minimum": 2},
+        "missing_or_ineligible": {"type": "array", "items": {"type": "string"}},
+        "decision_use": {"const": "descriptive_context_only"}
+      },
+      "additionalProperties": true
+    },
+    "funnel": {
+      "type": "object",
+      "required": ["source", "count_semantics", "lag_state", "stages"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "count_semantics": {"enum": ["unique_entities", "events", "other"]},
+        "lag_state": {"enum": ["complete", "not_applicable", "incomplete", "unknown"]},
+        "stages": {"type": "array", "minItems": 2, "items": {"type": "object"}},
+        "root_cause_state": {"enum": ["verified", "inference", "unknown"]}
+      },
+      "additionalProperties": true
+    },
+    "external_outcome_binding": {
+      "type": "object",
+      "required": ["source", "binding_state", "outcome_definition", "availability_lag"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "binding_state": {"enum": ["verified", "partial", "unverified", "not_applicable"]},
+        "outcome_definition": {"type": "string", "minLength": 1},
+        "availability_lag": {"type": "string", "minLength": 1},
+        "model_provenance": {"type": ["object", "null"]},
+        "realized_outcome_available": {"type": "boolean"}
       },
       "additionalProperties": true
     },
@@ -210,7 +307,20 @@
               "proposed_value": {},
               "absolute_delta": {"type": ["number", "null"]},
               "percentage_delta": {"type": ["number", "null"]},
-              "financial_exposure": {"type": "string", "minLength": 1}
+              "financial_exposure": {
+                "type": "object",
+                "required": ["currency", "model", "period_count", "budget_ceiling_per_period", "maximum_incremental_amount", "horizon", "derivation"],
+                "properties": {
+                  "currency": {"type": "string", "minLength": 1},
+                  "model": {"enum": ["direct_amount_delta", "amount_delta_times_periods", "budget_ceiling_times_periods", "bounded_other"]},
+                  "period_count": {"type": ["number", "null"], "minimum": 0},
+                  "budget_ceiling_per_period": {"type": ["number", "null"], "minimum": 0},
+                  "maximum_incremental_amount": {"type": "number", "minimum": 0},
+                  "horizon": {"type": "string", "minLength": 1},
+                  "derivation": {"type": "string", "minLength": 1}
+                },
+                "additionalProperties": true
+              }
             },
             "additionalProperties": true
           }
@@ -229,12 +339,19 @@
         },
         "readback": {
           "type": "object",
-          "required": ["query", "success_predicate", "observed_at", "observed_state"],
+          "required": ["tool", "query", "success_predicate", "expected_state", "observed_at", "observed_state"],
           "properties": {
+            "tool": {"type": "string", "minLength": 1},
             "query": {"type": "string", "minLength": 1},
             "success_predicate": {"type": "string", "minLength": 1},
+            "expected_state": {"type": "object", "minProperties": 1},
             "observed_at": {"type": ["string", "null"]},
-            "observed_state": {"type": ["object", "null"]}
+            "observed_state": {
+              "oneOf": [
+                {"type": "object", "minProperties": 1},
+                {"type": "null"}
+              ]
+            }
           }
         },
         "rollback": {
@@ -267,5 +384,51 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"operating_class": {"const": "execute"}},
+        "required": ["operating_class"]
+      },
+      "then": {
+        "required": ["capability_manifest", "execution"],
+        "properties": {
+          "capability_manifest": {
+            "minItems": 2,
+            "allOf": [
+              {
+                "contains": {
+                  "type": "object",
+                  "required": ["mutability"],
+                  "properties": {"mutability": {"const": "read"}}
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": ["mutability"],
+                  "properties": {"mutability": {"const": "write"}}
+                }
+              },
+              {
+                "not": {
+                  "contains": {
+                    "type": "object",
+                    "required": ["mutability"],
+                    "properties": {
+                      "mutability": {"enum": ["mixed_dispatcher", "unknown"]}
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "else": {
+        "not": {"required": ["execution"]}
+      }
+    }
+  ],
   "additionalProperties": true
 }

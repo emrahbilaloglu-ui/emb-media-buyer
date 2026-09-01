@@ -1,6 +1,6 @@
 ---
 name: emb-media-buyer
-description: Evidence-led cross-platform paid media strategy, audit, diagnosis, measurement, budgeting, creative testing, forecasting, reporting, and approval-gated execution. Use for Meta Ads, Google Ads, TikTok Ads, Microsoft Ads, LinkedIn Ads, Pinterest, Snapchat, Reddit, Amazon Ads, Apple Ads, or programmatic work across ecommerce, lead generation, SaaS/B2B, apps, and marketplaces. Separates attributed platform results from business truth and incrementality, verifies volatile platform facts at runtime, models unit economics and marginal decisions, and requires preflight, read-back, and rollback controls for any live change. Do not use this skill alone to produce finished creative assets; hand an approved media brief to a creative-production workflow.
+description: Evidence-led paid-media strategy, account audit, diagnosis, benchmarking, measurement, funnel analysis, budgeting, pacing, forecasting, WBR, and approval-gated execution across Meta, Google, TikTok and TikTok for Business MCP, Microsoft, LinkedIn, Pinterest, Snapchat, Reddit, Amazon, Apple, and programmatic. Covers ecommerce, lead generation, SaaS/B2B, apps, marketplaces, catalogs, and TikTok Shop/GMV Max. Separates platform attribution, advertiser-owned outcomes, and incrementality; verifies volatile platform and tool facts at runtime; uses unit economics and marginal reasoning; and requires preflight, independent read-back, and rollback. Routes hooks, scripts, storyboards, generation, editing, and finished-asset QA to a creative workflow.
 ---
 
 # EMB Media Buyer
@@ -27,6 +27,7 @@ The table is cumulative, not a reading checklist. Load only named platforms and 
 | Need | Required references |
 |---|---|
 | Any audit, diagnosis, or recommendation | references/evidence-and-decision-policy.md; references/data-quality-and-diagnosis.md |
+| Account-specific diagnosis, benchmark, funnel, WBR, health review, or optimization | references/account-review-and-optimization.md |
 | Channel strategy, account architecture, launch, or roadmap | references/strategy-and-planning.md |
 | Economics, targets, forecast, scale, cut, or allocation | references/intake-and-unit-economics.md; references/budget-pacing-and-scaling.md |
 | Attribution, lift, experiment, or MMM | references/measurement-and-experimentation.md |
@@ -34,17 +35,18 @@ The table is cumulative, not a reading checklist. Load only named platforms and 
 | Meta Ads | references/platform-meta.md |
 | Google Ads | references/platform-google.md |
 | TikTok Ads | references/platform-tiktok.md |
+| TikTok for Business MCP, Smart+, Shop/GMV Max, lead, app, R&F, or TikTok API workflow | references/tiktok-mcp-operations.md |
 | Other channels or programmatic | references/platform-secondary.md |
 | Ecommerce, lead-gen, SaaS/B2B, or app-specific planning | references/business-model-playbooks.md |
 | Team process, cadence, naming, or governance | references/operations-and-governance.md |
 | KPI definitions, dashboard, benchmark, or scorecard | references/metric-dictionary.md |
-| Deterministic economics/pacing math or packet validation | references/script-usage.md |
+| Deterministic economics, pacing, benchmark, funnel, WBR math, or packet validation | references/script-usage.md |
 | Tracking, audiences, regulated categories, rights, or credentials | references/security-privacy-and-policy.md |
 | Any live mutation | references/live-execution-safety.md; references/platform-api-execution.md; references/security-privacy-and-policy.md |
 | Formal deliverable or machine-readable packet | references/output-contracts.md |
 | Volatile fact, current feature, eligibility, external claim, or disputed rule | references/runtime-source-registry.md; references/contradiction-ledger.md; consult references/source-ledger.md as the research index |
 
-Use only the relevant command in scripts/media_math.py, and only after its semantic input contract is satisfied. Use scripts/validate_decision_packet.py for a requested machine-readable decision packet and before any live change packet; a Markdown audit does not need a duplicate JSON packet unless the workflow asks for one. Their input contracts are in references/script-usage.md.
+Use only the relevant command in `scripts/media_math.py` or `scripts/account_review.py`, and only after its semantic input contract is satisfied. Use `scripts/validate_decision_packet.py` for a requested machine-readable decision packet and before any live change packet; a Markdown audit does not need a duplicate JSON packet unless the workflow asks for one. Their input contracts are in `references/script-usage.md`.
 
 ## Non-negotiable reasoning rules
 
@@ -61,6 +63,7 @@ Use only the relevant command in scripts/media_math.py, and only after its seman
 11. Use current first-party documentation for volatile platform facts. A YouTube rule, community benchmark, or GitHub automation is a hypothesis or implementation pattern, not platform truth.
 12. Prefer hold, monitor, or test when evidence cannot support act. Missing evidence is a decision result, not an invitation to fabricate precision.
 13. For live work, an API success response is not proof. Capture before-state, apply the smallest approved change, perform a fresh read-back, and retain a rollback path.
+14. Treat native diagnostics, bid recommendations, health scores, benchmark percentiles, automated-rule suggestions, and other agent outputs as evidence inputs—not decisions or authority. Independently verify coverage, mechanism, economics, and threshold provenance.
 
 ## End-to-end workflow
 
@@ -72,7 +75,7 @@ If these cannot be recovered from connected evidence, mark them unknown. Ask onl
 
 ### 2. Bind and qualify the evidence
 
-Build a source manifest with source, owner, retrieved time, coverage, grain, currency, time zone, attribution, latency, deduplication, and known gaps. Verify identifiers and joins from campaign through outcome and from creative master through delivered ad.
+Build a source manifest with source, owner, retrieved time, coverage, grain, currency, time zone, attribution, latency, deduplication, and known gaps. Verify identifiers and joins from campaign through outcome and from creative master through delivered ad. For account reviews, enumerate expected, observed, unique, missing, duplicate, deleted/archived, and inaccessible entities; keep regular, automated, shop/GMV, lead, app, search, and reservation reporting routes distinct where required.
 
 Run the data-quality gate before interpretation. If tracking, event definitions, joins, or financial reconciliation are materially broken, diagnose the measurement failure first. Performance optimization on bad telemetry is not optimization.
 
@@ -84,7 +87,7 @@ No scale recommendation is eligible until the decision metric is tied to contrib
 
 ### 4. Diagnose the system, not one headline
 
-Walk the full chain: eligibility and delivery → cost of reach/traffic → qualified attention → landing or store behavior → conversion quality → advertiser-owned outcome → contribution/cash. Locate the break, inspect concentration, and test rival explanations across demand, creative, audience, auction, offer, feed, landing experience, stock/capacity, sales follow-up, and measurement.
+Walk the full chain: eligibility and delivery → cost of reach/traffic → qualified attention → landing or store behavior → conversion quality → advertiser-owned outcome → contribution/cash. Locate the break, inspect concentration, and test rival explanations across demand, creative, audience, auction, offer, feed, landing experience, stock/capacity, sales follow-up, and measurement. Reconstruct configuration, status, automation, and mix changes around the symptom before naming a cause.
 
 Separate what happened descriptively, what likely explains it, what the evidence cannot distinguish, and the cheapest reliable evidence that would change the decision.
 

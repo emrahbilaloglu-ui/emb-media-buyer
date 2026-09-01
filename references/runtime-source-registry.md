@@ -56,6 +56,10 @@ Do not say “Privacy Sandbox is retired” as a single undifferentiated fact. G
 - TikTok Ads Help Center: https://ads.tiktok.com/help/
 - TikTok Business resources/products: https://ads.tiktok.com/business/
 - TikTok Business API: https://business-api.tiktok.com/portal/docs
+- TikTok for Business MCP overview: https://ads.tiktok.com/resources/help/article/about-tiktok-for-business-mcp-server
+- TikTok Agentic Hub: https://ads.tiktok.com/apps_and_agents/agentic-hub
+
+For MCP-assisted work, the live MCP tool list and selected full tool schemas outrank a cached inventory. Record loading mode, native aliases, discovered tool, endpoint/path, HTTP method, required parameters, mutability, limits, and retrieval time. Re-discover before use; the server adds and changes tools independently of this skill.
 
 ### Other channels
 

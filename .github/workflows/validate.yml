@@ -1,0 +1,58 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-validation:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install validation dependencies
+        run: python3 -m pip install --disable-pip-version-check jsonschema PyYAML
+      - name: Run deterministic tests
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'
+      - name: Validate JSON Schema definition
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from jsonschema import Draft202012Validator
+
+          schema = json.loads(
+              Path("assets/schemas/decision-packet.schema.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          Draft202012Validator.check_schema(schema)
+          PY
+      - name: Validate skill frontmatter
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import yaml
+
+          text = Path("SKILL.md").read_text(encoding="utf-8")
+          if not text.startswith("---\n"):
+              raise SystemExit("SKILL.md must start with YAML frontmatter")
+          _, frontmatter, _ = text.split("---", 2)
+          metadata = yaml.safe_load(frontmatter)
+          if metadata.get("name") != "emb-media-buyer":
+              raise SystemExit("unexpected skill name")
+          description = metadata.get("description")
+          if not isinstance(description, str) or not description.strip():
+              raise SystemExit("description must be non-empty")
+          if len(description) > 1024:
+              raise SystemExit("description exceeds 1024 characters")
+          PY

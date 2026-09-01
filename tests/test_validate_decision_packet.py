@@ -14,7 +14,7 @@ SPEC.loader.exec_module(validator)
 
 def base_packet() -> dict:
     return {
-        "schema_version": "1.1",
+        "schema_version": "1.2",
         "created_at": "2026-08-23T12:00:00+03:00",
         "operating_class": "read_only",
         "scope": {
@@ -128,6 +128,26 @@ def valid_execute_packet() -> dict:
         "marginal_implication": "The staged increase remains inside the approved downside exposure.",
         "capacity_constraints": ["daily fulfillment cap checked"]
     }
+    packet["capability_manifest"] = [
+        {
+            "tool": "ads_update_entity",
+            "endpoint": "/ad-set/update",
+            "method": "POST",
+            "mutability": "write",
+            "permissions": "account-scoped write",
+            "limits_or_latency": [],
+            "retrieved_at": "2026-08-23T12:04:00+03:00",
+        },
+        {
+            "tool": "ads_get_entity",
+            "endpoint": "/ad-set/get",
+            "method": "GET",
+            "mutability": "read",
+            "permissions": "account-scoped read",
+            "limits_or_latency": [],
+            "retrieved_at": "2026-08-23T12:04:00+03:00",
+        },
+    ]
     packet["execution"] = {
         "approval": {
             "status": "approved",
@@ -146,7 +166,15 @@ def valid_execute_packet() -> dict:
                 "proposed_value": 120,
                 "absolute_delta": 20,
                 "percentage_delta": 20,
-                "financial_exposure": "+20 TRY per active day"
+                "financial_exposure": {
+                    "currency": "TRY",
+                    "model": "amount_delta_times_periods",
+                    "period_count": 1,
+                    "budget_ceiling_per_period": None,
+                    "maximum_incremental_amount": 20,
+                    "horizon": "one approved active day",
+                    "derivation": "max(0, 120 - 100) * 1 day",
+                }
             }
         ],
         "preflight": {
@@ -158,8 +186,10 @@ def valid_execute_packet() -> dict:
             "validation_result": "target and field match approved scope"
         },
         "readback": {
+            "tool": "ads_get_entity",
             "query": "read ad_set_101 daily_budget and status",
             "success_predicate": "daily_budget equals 120 TRY and all unapproved fields remain unchanged",
+            "expected_state": {"daily_budget": 120, "status": "PAUSED"},
             "observed_at": None,
             "observed_state": None
         },
@@ -210,6 +240,147 @@ class ValidatorTests(unittest.TestCase):
         packet["execution"]["approval"]["approved_at"] = None
         errors, _ = validator.validate(packet)
         self.assertTrue(any("approved_at" in item for item in errors))
+
+    def test_execution_requires_resolved_write_and_read_tools(self) -> None:
+        packet = valid_execute_packet()
+        del packet["capability_manifest"]
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("requires capability_manifest" in item for item in errors))
+
+        packet = valid_execute_packet()
+        packet["capability_manifest"][0]["mutability"] = "mixed_dispatcher"
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("resolve the underlying tools" in item for item in errors))
+        self.assertTrue(any("explicit write tool" in item for item in errors))
+
+    def test_applied_execution_requires_matching_independent_readback(self) -> None:
+        packet = valid_execute_packet()
+        packet["execution"]["execution_state"] = "applied"
+        packet["execution"]["readback"]["observed_at"] = "2026-08-23T12:07:00+03:00"
+        packet["execution"]["readback"]["observed_state"] = {
+            "daily_budget": 120,
+            "status": "PAUSED",
+        }
+        errors, _ = validator.validate(packet)
+        self.assertEqual(errors, [])
+
+        for observed_state in [
+            {"daily_budget": 100, "status": "PAUSED"},
+            {},
+            {"success": True, "code": 0},
+        ]:
+            with self.subTest(observed_state=observed_state):
+                packet = valid_execute_packet()
+                packet["execution"]["execution_state"] = "applied"
+                packet["execution"]["readback"]["observed_at"] = "2026-08-23T12:07:00+03:00"
+                packet["execution"]["readback"]["observed_state"] = observed_state
+                errors, _ = validator.validate(packet)
+                self.assertTrue(any("read-back state" in item or "match expected_state" in item for item in errors))
+
+        packet = valid_execute_packet()
+        packet["execution"]["readback"]["tool"] = "ads_update_entity"
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("resolve to a read tool" in item for item in errors))
+
+    def test_readback_mismatch_state_requires_a_real_mismatch(self) -> None:
+        packet = valid_execute_packet()
+        packet["execution"]["execution_state"] = "readback_mismatch"
+        packet["execution"]["readback"]["observed_at"] = "2026-08-23T12:07:00+03:00"
+        packet["execution"]["readback"]["observed_state"] = {
+            "daily_budget": 100,
+            "status": "PAUSED",
+        }
+        errors, _ = validator.validate(packet)
+        self.assertEqual(errors, [])
+
+        packet["execution"]["readback"]["observed_state"] = packet["execution"]["readback"]["expected_state"]
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("requires observed_state to differ" in item for item in errors))
+
+    def test_execution_delta_arithmetic_is_verified(self) -> None:
+        packet = valid_execute_packet()
+        packet["execution"]["changes"][0]["proposed_value"] = 12000
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("absolute_delta" in item for item in errors))
+        self.assertTrue(any("percentage_delta" in item for item in errors))
+
+        packet = valid_execute_packet()
+        change = packet["execution"]["changes"][0]
+        change["proposed_value"] = 12000
+        change["absolute_delta"] = 11900
+        change["percentage_delta"] = 11900
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("does not reproduce" in item for item in errors))
+
+        packet = valid_execute_packet()
+        change = packet["execution"]["changes"][0]
+        change.update(
+            {
+                "field": "name",
+                "current_value": "old name",
+                "proposed_value": "new name",
+                "absolute_delta": None,
+                "percentage_delta": None,
+                "financial_exposure": {
+                    "currency": "TRY",
+                    "model": "bounded_other",
+                    "period_count": None,
+                    "budget_ceiling_per_period": None,
+                    "maximum_incremental_amount": 0,
+                    "horizon": "configuration write only",
+                    "derivation": "name-only change does not alter a spend control",
+                },
+            }
+        )
+        errors, _ = validator.validate(packet)
+        self.assertEqual(errors, [])
+
+    def test_delivery_activation_exposure_uses_budget_ceiling(self) -> None:
+        packet = valid_execute_packet()
+        change = packet["execution"]["changes"][0]
+        change.update(
+            {
+                "field": "status",
+                "current_value": "DISABLED",
+                "proposed_value": "ENABLED",
+                "absolute_delta": None,
+                "percentage_delta": None,
+                "financial_exposure": {
+                    "currency": "TRY",
+                    "model": "budget_ceiling_times_periods",
+                    "period_count": 2,
+                    "budget_ceiling_per_period": 120,
+                    "maximum_incremental_amount": 240,
+                    "horizon": "two approved active days",
+                    "derivation": "120 TRY daily ceiling * 2 days",
+                },
+            }
+        )
+        errors, _ = validator.validate(packet)
+        self.assertEqual(errors, [])
+
+        change["financial_exposure"]["maximum_incremental_amount"] = 20
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("budget ceiling" in item for item in errors))
+
+        change["financial_exposure"] = {
+            "currency": "TRY",
+            "model": "bounded_other",
+            "period_count": None,
+            "budget_ceiling_per_period": None,
+            "maximum_incremental_amount": 0,
+            "horizon": "unknown",
+            "derivation": "not calculated",
+        }
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("enables delivery" in item for item in errors))
+
+    def test_non_execute_packet_cannot_carry_a_staged_write(self) -> None:
+        packet = valid_execute_packet()
+        packet["operating_class"] = "prepare"
+        del packet["capability_manifest"]
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("must not contain an execution block" in item for item in errors))
 
     def test_rate_warns_without_denominator(self) -> None:
         packet = base_packet()

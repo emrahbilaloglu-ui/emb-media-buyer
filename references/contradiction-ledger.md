@@ -62,6 +62,30 @@ Paid-media advice often conflicts because sources answer different questions, us
 
 **Resolution:** base scale on expected marginal contribution, uncertainty, cash, capacity, lag, and a staged downside. Average ROAS is historical description. Do not extrapolate it linearly.
 
+## Benchmark percentile versus business decision
+
+**Conflict:** account-benchmark and reallocation tools describe P25/P50/P75 or top/bottom quartiles as optimization tiers, while profitability and marginal opportunity can differ from the peer distribution.
+
+**Resolution:** use comparable empirical percentiles as descriptive context only. Preserve advertiser, objective, grain, event, attribution, window, lag, peer count, missingness, and metric direction. A percentile cannot authorize a pause, scale, or reallocation without advertiser-owned economics and a scoped mechanism.
+
+## Native diagnosis versus verified cause
+
+**Conflict:** platform diagnostic agents and health tools return prioritized issues or recommendations, while the underlying tool may expose only a supported symptom class, active subset, benchmark population, or internal suggestion.
+
+**Resolution:** record the native output as one evidence item. Independently verify configuration, report coverage, change history, delivery, binding, business outcomes, alternatives, and a discriminator. Do not expose unavailable internal attribution or model details, and do not call a recommendation root-cause proof.
+
+## Health score versus decision readiness
+
+**Conflict:** audit tools compress many checks into a 0-100 score or A-F grade, which is easy to communicate but can hide objective mix, severity weights, sparse counts, and open measurement gates.
+
+**Resolution:** a score may navigate the finding list only when its formula and components are visible. Prioritize the underlying findings by business consequence, evidence, exposure, reversibility, and time sensitivity. Never let a composite score authorize money or delivery changes.
+
+## GMV Max attribution versus paid-media incrementality
+
+**Conflict:** GMV Max optimizes and reports total-channel outcomes that can include paid and organic orders, while media reporting may interpret the campaign total as ad-caused GMV.
+
+**Resolution:** use current dedicated GMV Max reporting and preserve its product-specific attribution scope. Reconcile paid, organic, affiliate, product, shop, refund, and contribution views. Incremental paid-media claims still require a credible counterfactual.
+
 ## Paid search/PMax efficiency versus demand creation
 
 **Conflict:** Search, Shopping, and PMax can report strong attributed results while capturing branded, organic, returning, or already-intended demand.
@@ -103,6 +127,12 @@ Paid-media advice often conflicts because sources answer different questions, us
 **Conflict:** reference agents may auto-approve “minor” changes or auto-rebalance pacing; the user may not have authorized any live mutation.
 
 **Resolution:** internal severity is not authority. Every live spend/delivery mutation requires exact user approval, bounded target/field/exposure, preflight, read-back, and rollback. Analysis and preparation remain read-only.
+
+## MCP capability versus authority
+
+**Conflict:** an MCP may expose hundreds of reporting and mutation tools and platform material may describe autonomous operation, while the user authorized only analysis or monitoring.
+
+**Resolution:** capability discovery establishes what the connector can call, not what the agent may call. Classify the selected underlying operation, use a read allowlist for analysis, and require exact approval for each scoped live mutation. A generic dispatcher does not make a write read-only.
 
 ## How to use this ledger
 
