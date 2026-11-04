@@ -295,11 +295,12 @@ Use --strict to fail on warnings as well as errors. The validator checks:
 - core scope, evidence labels, metric qualifiers, data quality, diagnosis, plan, and unknowns;
 - causal claims against evidence rung;
 - competing hypotheses;
-- economics/reconciliation for a money-moving act;
+- version 1.3 exposure direction, claim type, sourced qualitative/economic decision basis, scoped gates, and conditional paid-continuation contract; version 1.2 retains its legacy rules;
+- economics/reconciliation for expansion/profit claims, while ordinary verified operational stop/rotation need not fabricate economics, reconciliation, thresholds, or safety incidents;
 - threshold origin, source/derivation, scope, approval state, and owner approval for proposed-governance money moves;
 - complete experiment contract for test;
 - a current capability manifest for execute, including resolved write and independent read tools; mixed dispatchers and unknown mutability are rejected;
-- exact arithmetic for numeric current/proposed deltas, null deltas for state changes, structured currency/model/period/horizon exposure that reproduces for budget and activation changes, and an independent read-back tool with expected/observed state matching;
+- exact arithmetic for numeric current/proposed deltas, null deltas for state changes, structured currency/model/period/horizon exposure that reproduces for budget and activation changes, nominal-reference versus verified-bound semantics, and an independent read-back tool with expected/observed state matching;
 - rejection of any execution block on read-only, prepare, or monitor packets;
 - exact approval, changes, preflight, read-back, rollback, and execution state for execute;
 - rates without denominators and ambiguous qualifiers.

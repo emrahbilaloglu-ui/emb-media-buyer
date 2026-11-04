@@ -117,7 +117,7 @@ Sparse movement remains sparse. Do not dramatize a small absolute lead/order cha
 
 ## Recommendation and optimization contract
 
-For every proposed optimization, record:
+For every material optimization or paid KEEP/WATCH recommendation, record:
 
 - symptom and verified scope;
 - intended business outcome and acquisition unit;
@@ -128,6 +128,10 @@ For every proposed optimization, record:
 - expected downside/base/upside as scenarios;
 - financial exposure, capacity, lag, experiment impact, cooldown, monitoring, and reversal;
 - whether the result is read-only advice, a paused draft, or an approved live operation.
+
+For active paid continuation use the compact contract in references/budget-pacing-and-scaling.md: change since the previous review, separate last-outcome dates/spend, waiting/stopping costs, current authorized context, expected information, next existing read, and trigger response. Reassess a met trigger; no purchase-present KEEP or generic WATCH fallback. Use the same source evidence standards for stopping and continuing. Narrative counts must match the numeric ledger; do not narrate two platform attributions as two verified store orders.
+
+Classify a proposed pause as operational risk choice or inferiority claim. A qualitative risk stop/rotation needs a sourced rationale and counterevidence, not a fabricated numeric threshold or proof that a low-spend sibling is superior. Fresh purchases and low spend affect the judgment without granting automatic immunity or proving failure. Check real promoted-source bindings before applying an owner MAIN-retention rule. Pausing a shared-budget ad is not guaranteed cash saving; a last-child pause needs a separate parent/slot consequence and an authority check for any parent or replacement change.
 
 Platform bid suggestions, automated-rule outputs, diagnostic agents, health scores, benchmark quartiles, and vendor forecasts are advisory inputs. They do not override economics or user authority. Never automatically:
 

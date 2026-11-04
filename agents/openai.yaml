@@ -1,6 +1,6 @@
 interface:
-  display_name: "EMB Media Buyer"
-  short_description: "EMB evidence-led paid media decisions"
+  display_name: "EMB Omni Media Buyer"
+  short_description: "Evidence-led cross-platform paid media system"
   brand_color: "#132A24"
   default_prompt: "Use $emb-media-buyer to audit my paid media, reconcile business economics, and produce an evidence-led decision plan."
 

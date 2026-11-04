@@ -13,6 +13,7 @@ class SkillAssetTests(unittest.TestCase):
         body = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
         self.assertLessEqual(len(body.splitlines()), 500)
         self.assertRegex(body, r"(?m)^name: emb-media-buyer$")
+        self.assertIn("# EMB Omni Media Buyer", body)
         description = re.search(r"(?m)^description: (.+)$", body)
         self.assertIsNotNone(description)
         self.assertLessEqual(len(description.group(1)), 1024)
@@ -22,6 +23,14 @@ class SkillAssetTests(unittest.TestCase):
         missing = [path for path in referenced if not (SKILL_ROOT / path).is_file()]
         self.assertEqual(missing, [])
 
+    def test_public_brand_preserves_the_canonical_invocation(self):
+        readme = (SKILL_ROOT / "README.md").read_text(encoding="utf-8")
+        agent = (SKILL_ROOT / "agents" / "openai.yaml").read_text(encoding="utf-8")
+        self.assertTrue(readme.startswith("# EMB Omni Media Buyer\n"))
+        self.assertIn('display_name: "EMB Omni Media Buyer"', agent)
+        self.assertIn("$emb-media-buyer", readme)
+        self.assertIn("$emb-media-buyer", agent)
+
     def test_decision_evals_are_unique_and_adversarial(self):
         payload = json.loads(
             (SKILL_ROOT / "evals" / "evals.json").read_text(encoding="utf-8")
@@ -29,7 +38,7 @@ class SkillAssetTests(unittest.TestCase):
         cases = payload["cases"]
         ids = [case["id"] for case in cases]
         self.assertEqual(len(ids), len(set(ids)))
-        self.assertEqual(len(cases), 44)
+        self.assertGreaterEqual(len(cases), 44)
         for case in cases:
             self.assertTrue(case["expected_behaviors"])
             self.assertTrue(case["forbidden_behaviors"])

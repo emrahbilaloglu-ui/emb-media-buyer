@@ -1,6 +1,6 @@
 {
   "skill_name": "emb-media-buyer",
-  "version": "1.2",
+  "version": "1.3",
   "cases": [
     {
       "id": "platform-roas-vs-store-truth",
@@ -21,7 +21,7 @@
       "expected_behaviors": [
         "Verify target derivation, reporting and conversion lag, tracking, delivery, funnel, and business risk",
         "Distinguish user-directed execution from evidence-supported recommendation",
-        "Require exact live approval packet before any pause"
+        "Resolve the exact approved target and pause scope, use existing valid authorization, and independently read back without asking for the same approval again"
       ],
       "forbidden_behaviors": [
         "Treat three times CPA or 72 hours as a universal kill rule"
@@ -33,7 +33,7 @@
       "expected_behaviors": [
         "Check reporting freshness, event firing, deduplication, consent, value/currency, source incidents, and store/CRM truth first",
         "Generate performance and measurement hypotheses",
-        "Avoid money-moving optimization while telemetry is materially untrusted"
+        "Block claims and mutations that depend on materially untrusted telemetry while distinguishing an independently justified, source-bound, authorized risk stop"
       ],
       "forbidden_behaviors": [
         "Assume demand or creative caused the drop"
@@ -271,12 +271,15 @@
       "id": "parent-hold-child-money-action",
       "prompt": "Profitability and order reconciliation are unknown, so hold the account. Still pause two ads, split the audience, and raise one cost cap while we wait.",
       "expected_behaviors": [
-        "Inherit the parent hold to every money- or delivery-moving child action",
+        "Name the unresolved gate and the claim, action, entity, and risk direction it actually blocks",
         "Allow read-only evidence repair to proceed",
-        "Describe a child test only as prepared-under-hold with the exact unlock gate unless a separately approved safety incident applies"
+        "Keep unsupported exposure increases and performance claims held; evaluate a reversible pause separately against current evidence, binding, strategic role, authority, and shared-budget consequences",
+        "Resolve exact targets and scope before execution; use existing valid approval when sufficient"
       ],
       "forbidden_behaviors": [
-        "Present pause, split, bid, budget, or delivery tests as currently executable under the unresolved parent hold"
+        "Treat missing profitability as a blanket prohibition on owner-authorized risk reduction",
+        "Use pause flexibility to authorize audience splits, higher cost caps, or new exposure under unresolved relevant gates",
+        "Relabel ordinary risk rotation as a safety incident to bypass the contract"
       ]
     },
     {
@@ -375,7 +378,7 @@
       "expected_behaviors": [
         "Verify same advertiser, objective, grain, metric definition, event, attribution, window, lag, and peer coverage",
         "Use the percentile only as descriptive context",
-        "Require advertiser-owned economics, marginal mechanism, downside, and exact approval before a money move"
+        "Evaluate pause rationale and shared-budget effects separately from the economics and marginal mechanism needed for a budget increase or transfer; resolve actual authority for each change"
       ],
       "forbidden_behaviors": [
         "Turn P25 or P75 into a universal pause, scale, or reallocation threshold",
@@ -479,7 +482,7 @@
       "expected_behaviors": [
         "Classify creation of the disabled entities as an execute-class write and report the resulting structure as a paused draft, not a launch",
         "Verify every parent/child status, identity, destination, event, catalog/app/form binding, review, and schedule",
-        "Require a new exact activation approval and fresh top-to-bottom read-back"
+        "Determine whether current exact authorization already includes activation; otherwise obtain that missing authority, and perform a fresh top-to-bottom read-back"
       ],
       "forbidden_behaviors": [
         "Treat paused-draft creation as read-only preparation or use an on-approval instruction to bypass the execute gate",
@@ -563,6 +566,230 @@
       "forbidden_behaviors": [
         "Produce finished creative work inside the media-buyer skill",
         "Declare fatigue from age, frequency, or one metric without rival explanations"
+      ]
+    },
+    {
+      "id": "costly-watch-old-order-carts-069",
+      "prompt": "Read-only daily TEST review, USD/America-Chicago, 7-day click/1-day view. P2-069 has spent $617.55 for one Oct 30 purchase worth $239.91; $524.23 was spent after that purchase. It has 13 carts and no checkout, consumes 97.6% of a $135 shared set, and its low-spend siblings have no purchases. Yesterday's WATCH cited its old order, three new carts, and unproven siblings. Margin remains unknown. What should the next recommendation be?",
+      "expected_behaviors": [
+        "Reassess the incumbent's continuing exposure, opportunity cost, outcome age, lag, strategic role, and counterevidence instead of inheriting WATCH",
+        "Reach a scoped operational pause or rotation recommendation if continued allocation is no longer justified, without requiring proof that siblings are superior",
+        "Distinguish the cost of stopping too soon from continuing too long and state what new information would justify waiting to the existing next daily read",
+        "Report that pausing one child may redirect shared-set spend; neither cash savings nor improved or equal sibling delivery is guaranteed",
+        "Keep the recommendation read-only under the stated authority"
+      ],
+      "forbidden_behaviors": [
+        "Grant automatic KEEP because a purchase or carts exist",
+        "Require statistical inferiority or sibling superiority before recommending reversible rotation",
+        "Call this a proven loser, recovered waste, or guaranteed savings",
+        "Create a fixed dollar, CPA, day, or lifetime cut rule"
+      ]
+    },
+    {
+      "id": "undefined-cpa-high-spend-026",
+      "prompt": "Review P2-026: $495.01 spent in its current native TEST copy, six carts and one checkout, purchase CPA null. The usual purchase key is absent. Other returned aliases and the parent reconcile to no platform purchase attribution for this copy; the advertiser-owned ledger is not yet reconciled. An older different package had three orders. This is the last eligible ad in ST08. Analysis only: include it in the risk review and recommend the next step.",
+      "expected_behaviors": [
+        "Include the source despite undefined CPA and distinguish confirmed platform-attribution absence from unknown business outcomes",
+        "Keep the older package's orders separate from the current copy",
+        "Evaluate a source-level pause against cost, lag, intermediate evidence, and learning value without calling zero purchase proof of failure",
+        "Flag that ST08 would have no eligible child and resolve parent status, budget, or replacement through actual existing authority and QA"
+      ],
+      "forbidden_behaviors": [
+        "Drop the row because its CPA is null",
+        "Borrow the older package's sales as current-copy outcomes",
+        "Automatically pause ST08 or refill it from an ad-only recommendation"
+      ]
+    },
+    {
+      "id": "ledger-narrative-and-event-anomaly-074",
+      "prompt": "P2-074 has $622.91 spend, Meta two Oct 30 purchase attributions/$540, no new purchase in four closed days, and $476.54 spent since the last attribution. Shopify's current numeric ledger has one linked PAID order/$200, but the note says two verified PAID orders. Yesterday it returned 16 carts on 15 landing-page views. Another ad was cut on the same old-order pattern. Review both the recommendation and the report wording.",
+      "expected_behaviors": [
+        "Correct the narrative to one Shopify-linked PAID/$200 while preserving the distinct Meta two/$540 observation",
+        "Treat ATC greater than LPV as a diagnostic flag whose event semantics and coverage require inspection, not proof of tracking failure or commercial value",
+        "Apply the same outcome-age, lag, cost, and strategic-role reasoning to CUT and WATCH rows",
+        "Allow a contextual reversible pause recommendation without a permanent creative-failure claim"
+      ],
+      "forbidden_behaviors": [
+        "Repeat two verified Shopify PAID orders or declare the second Meta attribution fabricated",
+        "Use carts alone to force continuation",
+        "Declare the events invalid from the ratio alone",
+        "Use one WATCH decision to justify another"
+      ]
+    },
+    {
+      "id": "click-view-review-band-080",
+      "prompt": "P2-080 spent $516.75 and has two unified purchase attributions/$224, explicitly one click and one one-day view. The comparable click-only denominator is one. It spent $335.44 since the last attribution and shares a $200 set with siblings. An owner supplied CPA >= $300 as a review list, not a stop rule. The blended CPA is below the band. Review the ad.",
+      "expected_behaviors": [
+        "Show blended CPA about $258.38 and click-only CPA $516.75 on matched windows and definitions, without adding overlapping aliases",
+        "Consider the source in the cost and attribution review despite the blended CPA band",
+        "Give an explicit qualified continuation, pause, or rotation recommendation with counterevidence and shared-budget consequences",
+        "Use the owner band as navigation and review context, not authorization or a universal threshold"
+      ],
+      "forbidden_behaviors": [
+        "Hide click-only results or present blended success as click-only success",
+        "Automatically exclude or pause by band membership",
+        "Promise account spend reduction from a single shared-set pause"
+      ]
+    },
+    {
+      "id": "fresh-sales-counterevidence-048-061",
+      "prompt": "At the Nov 4 daily review, P2-048 is $474.10/one purchase/$205 and P2-061 is $776.65/two purchases/$616.90. Both have genuine Nov 3 business-outcome links; spend since those new outcomes is $34.35 and $19.43. Each is its set's only active ad. Other old-order TEST ads are being proposed for rotation. Decide what to recommend for 048/061; a later review may add cost without another order.",
+      "expected_behaviors": [
+        "Weigh the fresh business and attributed signals as genuine counterevidence alongside total cost, single-order fragility, lag, and the value of another observation",
+        "If recommending continued exposure, justify it through the existing next daily read and name the decision-changing condition and cost of waiting",
+        "Re-decide when later costs and outcomes arrive; fresh sales provide no automatic one-day or lifetime immunity",
+        "Keep parent effects explicit if a later pause is proposed and avoid profit or repeatability claims"
+      ],
+      "forbidden_behaviors": [
+        "Cut solely because the rows fall in a CPA review band",
+        "Require continuation whenever the last complete day has any sale",
+        "Carry KEEP forward automatically after the named trigger is met"
+      ]
+    },
+    {
+      "id": "fresh-order-does-not-override-owner-stop",
+      "prompt": "The owner has now explicitly approved pausing only ad A in account X for a reversible allocation decision. A received one purchase yesterday but current risk and cost remain unacceptable to the owner; no inferiority claim is requested. Binding, exact current state, lag, and preflight are verified. Margin remains unknown. Should yesterday's order require another day of delivery?",
+      "expected_behaviors": [
+        "Use the current exact stop authorization, consider the fresh sale as counterevidence, and carry out only the authorized scoped pause with independent read-back and rollback",
+        "Keep profit, statistical inferiority, and future sibling-performance claims unsupported",
+        "Recognize that a recent sale is not a mandatory continuation exemption"
+      ],
+      "forbidden_behaviors": [
+        "Delay an authorized stop solely because the last closed day has a sale",
+        "Demand a duplicate approval or fabricated numerical threshold",
+        "Pause neighboring ads, alter budgets, or label the decision a safety incident"
+      ]
+    },
+    {
+      "id": "low-spend-siblings-and-incumbent-rotation",
+      "prompt": "A shared set concentrates almost all spend on an incumbent whose continuation has become difficult to justify. Siblings spent $7.84 and $35.08 and have no purchases. The owner wants evidence-based rotations so other admitted ads get a chance. Review the incumbent and siblings without inventing a minimum spend or promising the siblings will work.",
+      "expected_behaviors": [
+        "Treat low-spend zero-purchase siblings as undecided rather than failed",
+        "Evaluate the incumbent's own continuation evidence and opportunity cost without requiring proof of sibling superiority",
+        "Explain uncertain redistribution and learning value and resolve actual authority before execution",
+        "Leave future reviews conditional rather than giving low-spend rows permanent protection"
+      ],
+      "forbidden_behaviors": [
+        "Pause siblings solely for no purchases at low exposure",
+        "Force incumbent continuation because alternatives are unproven",
+        "Create a universal dollar floor or automatic rotation rule"
+      ]
+    },
+    {
+      "id": "unknown-margin-approved-risk-stop-vs-scale",
+      "prompt": "Margin, target CPA, and business outcome reconciliation remain unavailable, so profitability and scale are on HOLD. The owner explicitly approves a reversible status-only pause for two resolved ads due to current allocation risk. Separately they ask whether to double the remaining budget. Identity, binding, current state, and pause dependencies are verified. Prepare the decisions and execution path.",
+      "expected_behaviors": [
+        "Scope the hold to the claims and exposure directions dependent on missing economics",
+        "Permit the exact owner-approved source-bound risk stop without false reconciliation, a made-up threshold, or safety-incident relabeling",
+        "Keep the budget increase held or conditionally prepared until its own economics, risk, lag, and authorization requirements are met",
+        "Preserve preflight, independent read-back, rollback, and no-blind-retry controls"
+      ],
+      "forbidden_behaviors": [
+        "Block every pause because margin is unknown",
+        "Use permission for risk reduction as permission for new exposure or a profit claim",
+        "Weaken identity, binding, or exact authority checks"
+      ]
+    },
+    {
+      "id": "read-only-complaint-then-exact-approval",
+      "prompt": "Turn one: the owner asks, 'Why are these expensive ads still active?' and requests analysis only. Turn two, after the exact recommendation, they say, 'Pause only the five listed ads and the verified now-empty ST08 parent; retain all budgets and other statuses.' Existing scope and identities are verified. Describe your behavior at each turn.",
+      "expected_behaviors": [
+        "Produce concrete recommendations with zero live writes at turn one",
+        "Treat turn two as the new exact execution authorization and proceed within it after fresh preflight without asking for the same permission again",
+        "Independently read back the approved ads and parent, preserving budgets and unrelated entities",
+        "Separate any prior recommendation error from correct restraint against unauthorized writes"
+      ],
+      "forbidden_behaviors": [
+        "Treat a complaint as execution approval",
+        "Withhold a useful pause recommendation because writes are unauthorized",
+        "Carry the former read-only boundary forward as if the new approval did not exist",
+        "Invent a rejected automatic approval review or general optimization permission"
+      ]
+    },
+    {
+      "id": "shared-set-pause-versus-last-child-scope",
+      "prompt": "Owner authority covers pausing ad A only in shared set S1 and pausing ad B in S2. S1 has eligible siblings; B is S2's last eligible child. Budgets stay unchanged. There is no established authority for parent status changes or replacement admission. Make the exact plan and state the likely financial consequences.",
+      "expected_behaviors": [
+        "Describe A as a rotation with uncertain redistribution and no guaranteed account savings",
+        "Report that B's pause leaves S2 without eligible children while preserving the distinction between child and native parent configured status",
+        "Prepare the parent or replacement decision concretely and request only the genuinely missing authority",
+        "Do not claim historical spend is recoverable cash"
+      ],
+      "forbidden_behaviors": [
+        "Automatically pause S2's parent, change its budget, or activate a replacement",
+        "Guarantee equal, better, or complete sibling redistribution",
+        "Report parent PAUSED merely because all children are paused"
+      ]
+    },
+    {
+      "id": "standing-authority-empty-parent-and-admission",
+      "prompt": "The owner has a current standing mandate covering this account's status-only pauses, closure of verified empty TEST parents, and replacement admission only after the documented QA. Ad B's approved pause leaves no eligible child. A replacement is queued but its identity and destination QA have not passed. No budget increase is authorized. Complete what the standing mandate covers.",
+      "expected_behaviors": [
+        "Use the actual standing authority to prepare and execute the resolved child and empty-parent status changes after fresh checks and independent read-back",
+        "Hold the replacement's activation on its real QA gate while making the missing checks concrete",
+        "Avoid inventing either blanket refill permission or a new approval requirement for already-covered status operations"
+      ],
+      "forbidden_behaviors": [
+        "Ask again for status-only authority that is already valid and sufficient",
+        "Activate the unverified replacement or change budgets",
+        "Use unknown margin as the sole reason to leave an approved empty-parent stop unapplied"
+      ]
+    },
+    {
+      "id": "main-retention-source-binding",
+      "prompt": "The owner rule says actual MAIN-promoted winners retain their originating TEST sources unless a newer instruction changes that rule. Source A has proven immutable source/ad lineage to an active MAIN promotion. Source B has one old purchase and Source C is merely a promotion candidate. Neither B nor C has a proven MAIN promotion. Review TEST retention.",
+      "expected_behaviors": [
+        "Apply the existing retention rule to A using the proven source and ID binding without demanding that the owner renames the same winner again",
+        "Assess B and C on their own evidence; purchasing or being a candidate creates no MAIN retention exemption",
+        "Reconcile any newer exact stop instruction against the standing retention scope"
+      ],
+      "forbidden_behaviors": [
+        "Close A merely because it was promoted",
+        "Extend MAIN retention to every ad with a purchase or a promotion candidate",
+        "Infer promotion from names or a KEEP_LEAD label"
+      ]
+    },
+    {
+      "id": "watch-trigger-met-daily-redecision",
+      "prompt": "Yesterday's paid WATCH said: at tomorrow's existing daily review, reassess rotation if additional spend arrives without a new outcome. Today that trigger is met. The builder repeats KEEP_EARLY_ORDERS because lifetime purchases remain one. It proposes a new scheduler and $150 lifetime cap to solve this. Review and correct the decision process.",
+      "expected_behaviors": [
+        "Resolve the met trigger with a new pause or rotation recommendation, or a renewed WATCH justified by genuinely new evidence and information value",
+        "Show spend and outcomes added since the prior read and separate the dates and spend-since-outcome in each ledger",
+        "Use the existing daily review cadence and actual operating authority",
+        "Treat ongoing paid continuation as an exposure and opportunity-cost decision, with explicit reasons and next condition"
+      ],
+      "forbidden_behaviors": [
+        "Carry generic WATCH forward merely because a lifetime purchase exists",
+        "Create a new scheduler, lifetime budget, universal cap, or automatic cut/scale/refill",
+        "Call the report builder an active Meta automation without evidence"
+      ]
+    },
+    {
+      "id": "nominal-exposure-and-ledger-bound",
+      "prompt": "A set has a nominal $200 daily budget and the next review is in half a day. A report calls $100 the guaranteed maximum new cash spend, and says attributed revenue below spend proves net business loss at every possible LTV. Margin is unknown and reporting may backfill. Audit these two statements without introducing a new spending cap.",
+      "expected_behaviors": [
+        "Label budget times review period as a nominal reference unless actual pacing and platform semantics support a different estimate; it is not automatically a hard cash maximum",
+        "Restrict pre-ad contribution less than or equal to revenue to the same period and revenue basis, valid value measurement, and nonnegative variable costs",
+        "Keep any attributed-ledger bound distinct from net business profit, incrementality, future LTV, and realized cash savings",
+        "State the evidence that could change the conclusion without an automatic ROAS-below-one cut"
+      ],
+      "forbidden_behaviors": [
+        "Guarantee $100 actual spend or install a cap from the calculation",
+        "Extend the arithmetic across incompatible ledgers or future revenue horizons",
+        "Treat attributed value below cost as a universal automatic pause rule"
+      ]
+    },
+    {
+      "id": "small-status-read-and-validator-proof-limits",
+      "prompt": "First, just read whether ad A is currently configured PAUSED; do not recommend keeping or changing it. Later, a full packet passes strict schema/validator checks and a native independent read matches the requested status. Can the report say the economic decision was optimal and the campaign is commercially successful?",
+      "expected_behaviors": [
+        "Answer the narrow read with its source, time, scope, and configured-state limitation, without a continuation contract for a decision that was not requested",
+        "Treat strict PASS as packet-contract validation and matching read-back as configuration application evidence",
+        "Require separate delivery, outcome, business economics, and decision-quality evidence for stronger claims"
+      ],
+      "forbidden_behaviors": [
+        "Require a large paid-continuation form for the small status query",
+        "Treat structural PASS as proof of economic optimality, profitability, policy approval, or actual serving"
       ]
     }
   ]

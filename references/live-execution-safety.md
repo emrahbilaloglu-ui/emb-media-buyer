@@ -4,17 +4,19 @@ Use this file for any operation that can change spend, delivery, targeting, bidd
 
 ## Authority model
 
-Live execution requires explicit, current-session approval for the exact change set. Approval must resolve:
+Live execution requires current explicit approval or applicable standing authority for the exact change set. Check its scope, conditions, and any later revocation or superseding instruction. Approval must resolve:
 
 - platform and account/customer/advertiser ID;
 - entity IDs and entity types;
 - fields and current → proposed values;
-- budget/spend delta and maximum financial exposure;
+- budget/spend delta and financial exposure, distinguishing nominal references, forecasts, and verified bounds;
 - campaign/market/date scope;
 - whether active experiments, automated rules, shared budgets, portfolio bidding, or dependent entities may be affected;
 - mutation timing and monitoring/rollback contract.
 
 Authorization to inspect, prepare, log in, connect a tool, or execute a different change is insufficient. Read-only access does not become write authority because a connector supports mutations.
+
+A complaint such as “why is this still active?” authorizes investigation and concrete recommendations, not an inferred mutation. Once an explicit execution instruction covers the proposed changes, use that authority without asking for the same approval again. Ordinary operational risk stops need no invented safety-incident classification. Unknown margin is distinct from an unresolved target, binding, or authorization failure.
 
 Any delete, archive, irreversible replacement, broad account change, shared-resource change, or live tracking mutation deserves especially narrow confirmation. Prefer paused drafts, reversible edits, and validation modes when the platform supports them. Creating a paused/disabled draft is still a mutation and requires execute-class approval; only its later activation is a separate approval boundary.
 
@@ -28,7 +30,7 @@ Immediately before mutation:
 4. verify currency, time zone, budget type/period, units/micros, and date semantics;
 5. inspect active experiments, automated rules, shared budgets/strategies, drafts, policy, and pending changes;
 6. validate the desired state and platform constraints without applying when possible;
-7. compute absolute/percentage delta from the captured values, then derive structured daily, flight, and worst-case exposure with currency, model, period count, horizon, and formula; reject a packet whose stated deltas or maximum exposure do not reproduce;
+7. compute absolute/percentage delta from captured values, then derive structured exposure with currency, model, period count, horizon, formula, and amount semantics; reject arithmetic that does not reproduce. Budget × period is a nominal reference unless a separate evidenced bound exists, not a guaranteed worst-case cash cap. Report actual spend and forecasting uncertainty separately;
 8. save the prior state and rollback operation;
 9. define a narrow read-only tool/query, normalized expected-state projection, and exact success predicate independent of the mutation response;
 10. use an idempotency/change-request identifier when supported.

@@ -18,19 +18,32 @@ Every deliverable states:
 
 A decision packet contains:
 
-1. **Decision:** act, test, hold, monitor, or revert; summary, owner, deadline, confidence, and evidence rung.
+1. **Decision:** act, test, hold, monitor, or revert; summary, owner, deadline, confidence, and evidence rung (the causal ladder in references/measurement-and-experimentation.md, separate from source rank).
 2. **Evidence:** claim-level truth labels, source, retrieval time, coverage, and limitations.
 3. **Metrics:** name, value, unit, source, window, time zone, currency, attribution, conversion definition, count/denominator, and evidence label.
 4. **Data quality:** pass/pass_with_limits/fail, binding state, reconciliation state, critical issues, and decision impact.
-5. **Economics:** acquisition unit, revenue basis, formulas, input sources, downside/base/upside scenarios, target, marginal implication, capacity, and switch point.
+5. **Economics:** when required by the claim or exposure increase, acquisition unit, revenue basis, formulas, input sources, downside/base/upside scenarios, target, marginal implication, capacity, and switch point. Unknown margin alone does not block a sourced operational risk stop/rotation.
 6. **Diagnosis:** observed funnel break, leading mechanism, alternatives, supporting/contradicting evidence, confounds, and discriminator.
-7. **Plan:** exact action or test, mechanism, owner, primary metric, guardrails, exposure/lag window, decision rule, monitoring, reversal, and threshold records. Every exact threshold record includes rule/value, origin, source, derivation, scope, approval state, and approver; proposed governance cannot authorize a live money or delivery move without owner approval.
+7. **Plan:** exact action or test, exposure direction, sourced decision basis and counterevidence, owner, primary metric, guardrails, exposure/lag window, decision rule, monitoring, reversal, scoped unresolved gates, and actual threshold records. A qualitative decision does not need an invented threshold. Every exact threshold record includes rule/value, origin, source, derivation, scope, approval state, and approver; proposed governance cannot authorize a live money or delivery move without owner approval.
 8. **Unknowns:** material unknown, consequence, cheapest evidence, and owner.
-9. **Execution block:** required only for live execution; approval, before/after fields, recomputed deltas, structured maximum financial exposure with currency/model/period/horizon/derivation, preflight, receipt, fresh read-back, rollback, partial failures, and execution state.
+9. **Execution block:** required only for live execution; approval, before/after fields, recomputed deltas, structured financial exposure with currency/model/period/horizon/derivation and amount semantics, preflight, receipt, fresh read-back, rollback, partial failures, and execution state. Distinguish a nominal budget reference from a verified bound and actual spend.
 
 When applicable, add the schema blocks `account_review`, `benchmark`, `funnel`, and `external_outcome_binding`. Add `capability_manifest` whenever tool semantics are decision-relevant; it is mandatory for `execute` and must contain the current resolved write tool plus an independent read tool. Use `capability_snapshot` for host/loading-mode provenance and discovery counts. Execute read-back declares the independent read tool and a normalized expected-state projection; `applied` or later requires a fresh observed projection that matches exactly. These blocks preserve current MCP/tool semantics, account coverage, descriptive peer context, stage definitions, and advertiser-owned outcome provenance without making every read-only packet carry irrelevant fields.
 
 Validate a requested or execution-bound JSON form with assets/schemas/decision-packet.schema.json and scripts/validate_decision_packet.py. Do not duplicate a Markdown audit as JSON unless the user or workflow needs a machine-readable companion. If both exist, generate the summary from, or cross-check it against, the validated packet.
+
+### Directional packet version 1.3
+
+Use `schema_version: "1.3"` for new packets. Version 1.2 remains accepted under its legacy conservative rules; do not alter dated evidence to masquerade as a new packet. Keep `money_moving` for compatibility, and use these fields to express the actual decision:
+
+- `decision.claim_type`: `operational`, `descriptive`, `profitability`, `superiority`, `inferiority`, or `causal`. Superiority/inferiority requires sourced `claim_sufficiency` with `method`, `result`, and `source_ids`; an operational pause does not assert either claim.
+- `plan.exposure_direction`: `increase`, `reduce`, `rotate`, `continue`, or `none`. Reduce/rotate cannot contain hidden activation or budget increase. Shared-budget pause consequences belong in the rationale, not a savings promise.
+- `plan.decision_basis`: `kind` (`qualitative_risk`, `economics`, `experiment`, or `diagnostic`), `rationale`, evidence `source_ids`, and `counterevidence`. `threshold_records` may be empty when no actual threshold is used.
+- `plan.unresolved_gates`: records of `reason`, `scope`, `blocked_directions`, and `blocked_claims`. Attach only gates relevant to this scoped packet; split unrelated decisions rather than using a broad hold or a fabricated safety exception.
+- `plan.continuation`: required for a material paid continuation decision, not a connection or status lookup. Include `since_previous_review`, `last_outcomes` (dates/spend by separate ledger, or explicit unknowns), `exposure_context`, `cost_of_waiting`, `cost_of_stopping`, `next_information`, `continuation_rationale`, `next_review`, `decision_trigger`, and `trigger_response`. Use the existing cadence; a met trigger needs an explicit fresh decision, not automatic cut or repeated WATCH.
+- Execute exposure adds `amount_semantics`: `nominal_reference` or `verified_bound`. The legacy key `maximum_incremental_amount` is not a hard cash maximum when nominal; a verified bound needs `bound_evidence`. Budget × period alone does not verify a bound.
+
+Business reconciliation describes outcomes, not validated target configuration. Do not claim stronger reconciliation to pass validation. Structural PASS verifies the packet contract and arithmetic, not the truth of its evidence, wisdom of KEEP/CUT, profit, or an applied live outcome. Use behavioral evaluations as an additional check on decision quality.
 
 ## Audit report
 
@@ -117,4 +130,4 @@ Return only changed or decision-relevant state:
 - decision trigger status;
 - next scheduled read and owner.
 
-No-change is a valid result. Do not optimize during monitoring unless separately authorized.
+For material paid KEEP/WATCH, add the compact continuation record above and actual delivery status. A decision hold does not pause delivery. No-change is a valid result when continuation is justified. Read-only monitoring can recommend changes; mutation depends on the actual explicit or standing execution authority.

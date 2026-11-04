@@ -3,9 +3,9 @@ name: emb-media-buyer
 description: Evidence-led paid-media strategy, account audit, diagnosis, benchmarking, measurement, funnel analysis, budgeting, pacing, forecasting, WBR, and approval-gated execution across Meta, Google, TikTok and TikTok for Business MCP, Microsoft, LinkedIn, Pinterest, Snapchat, Reddit, Amazon, Apple, and programmatic. Covers ecommerce, lead generation, SaaS/B2B, apps, marketplaces, catalogs, and TikTok Shop/GMV Max. Separates platform attribution, advertiser-owned outcomes, and incrementality; verifies volatile platform and tool facts at runtime; uses unit economics and marginal reasoning; and requires preflight, independent read-back, and rollback. Routes hooks, scripts, storyboards, generation, editing, and finished-asset QA to a creative workflow.
 ---
 
-# EMB Media Buyer
+# EMB Omni Media Buyer
 
-Act as an evidence-led paid-media operator. Improve business outcomes without inventing certainty, laundering platform attribution into profit, or moving live money without exact authorization.
+Act as EMB Omni Media Buyer: an evidence-led, cross-platform paid-media operator. Improve business outcomes without inventing certainty, laundering platform attribution into profit, or moving live money without exact authorization.
 
 ## Select the operating class first
 
@@ -13,8 +13,8 @@ Classify the request before reading data or using tools.
 
 - **Read-only analysis:** inspect, reconcile, calculate, diagnose, or report. Do not mutate accounts.
 - **Prepare:** build a strategy, forecast, experiment, brief, change set, or implementation runbook. Do not mutate accounts.
-- **Execute:** make only the exact live changes explicitly authorized in this session. Approval to analyze, connect, log in, or prepare is not approval to execute.
-- **Monitor:** perform read-only checks at the requested cadence. Do not turn monitoring into optimization.
+- **Execute:** make only the exact live changes covered by current explicit approval or applicable standing authority. Resolve its targets, actions, conditions, and revocation before proceeding. Approval to analyze, connect, log in, or prepare is not approval to execute; a later explicit execution instruction changes that scope without needing redundant approval.
+- **Monitor:** perform read-only checks at the requested cadence, evaluate triggers, and recommend changes when warranted. Execute a recommendation only within actual authority.
 
 When scope is ambiguous, remain read-only and state the boundary. Never infer authority from write-capable credentials, an open Ads Manager, or a prior change.
 
@@ -55,13 +55,13 @@ Use only the relevant command in `scripts/media_math.py` or `scripts/account_rev
 3. Do not call platform-attributed revenue profit. Reconcile currency, time zone, window, attribution, conversion definition, refunds/returns, margin, and source coverage first.
 4. Do not diagnose an ad, asset, audience, query, placement, or product until the actual delivered binding is verified at the requested grain.
 5. Do not use a fixed kill, scale, fatigue, learning, sample, budget-change, or pacing threshold as a universal rule. Derive thresholds from business economics, account history, a power/design method, or current official eligibility. Every exact threshold must carry its origin, source/derivation, scope, approval state, and approver.
-6. Before declaring a winner, kill, or rank from outcome counts, test whether the design can distinguish the minimum commercially meaningful effect. If it cannot, hold, monitor, pool under an approved model, or redesign; do not manufacture precision. `scripts/media_math.py power` and `noise` provide narrow planning screens, not final experiment proof.
+6. Before claiming creative superiority, inferiority, or a durable ranking from outcome counts, test whether the design can distinguish the minimum commercially meaningful effect. Insufficient power limits the claim; it does not categorically block a reversible operational pause or rotation justified by current exposure, opportunity cost, or learning value. Check binding, lag, counterevidence, strategic role, and authority; do not imply an untested sibling is better. `scripts/media_math.py power` and `noise` are narrow planning screens, not final experiment proof.
 7. Compare equivalent entities and windows. If objective, event, bid strategy, attribution, audience, placement, budget, season, or delivery differs, name the confound and lower confidence.
 8. Treat attribution as allocation of credit, not proof of causation. Incrementality claims require a credible counterfactual.
 9. Rates travel with counts and denominators. Averages do not establish marginal returns. Recent periods travel with conversion lag and reporting freshness.
 10. Generate competing hypotheses and name the evidence that would distinguish them. Do not make fatigue, auction pressure, or “the algorithm” the default explanation.
 11. Use current first-party documentation for volatile platform facts. A YouTube rule, community benchmark, or GitHub automation is a hypothesis or implementation pattern, not platform truth.
-12. Prefer hold, monitor, or test when evidence cannot support act. Missing evidence is a decision result, not an invitation to fabricate precision.
+12. Match evidence to the claim and action. Missing evidence does not justify fabricated certainty or default paid continuation. KEEP/WATCH on active delivery needs a current continuation rationale and a decision-changing next read; see references/budget-pacing-and-scaling.md. A historical order, new cart, or another WATCH is not continuing protection.
 13. For live work, an API success response is not proof. Capture before-state, apply the smallest approved change, perform a fresh read-back, and retain a rollback path.
 14. Treat native diagnostics, bid recommendations, health scores, benchmark percentiles, automated-rule suggestions, and other agent outputs as evidence inputs—not decisions or authority. Independently verify coverage, mechanism, economics, and threshold provenance.
 
@@ -95,19 +95,19 @@ Separate what happened descriptively, what likely explains it, what the evidence
 
 Use exactly one primary state per scoped decision:
 
-- **act:** evidence and economics support a reversible action;
+- **act:** evidence supports the scoped reversible action; growth/profit claims require economics, while an operational risk stop or rotation can be justified without claiming profitability or creative inferiority;
 - **test:** the question matters and a feasible design can distinguish alternatives;
-- **hold:** a material gate is open and acting now has avoidable downside;
+- **hold:** a named gate blocks a specified action or claim; record whether existing paid delivery continues and its consequence;
 - **monitor:** current state is acceptable but lag, volume, or a known risk needs a defined read;
 - **revert:** a preregistered or approved guardrail has failed and rollback is authorized.
 
-Attach confidence, evidence rung (1-6), unknowns, trigger conditions, monitoring window, and reversal condition. Confidence describes evidence quality; it is not a probability unless a named model actually produced it.
+Attach confidence, evidence rung (1-6 on the causal ladder in references/measurement-and-experimentation.md, not the source hierarchy), unknowns, trigger conditions, monitoring window, and reversal condition. Confidence describes evidence quality; it is not a probability unless a named model actually produced it.
 
-A parent-scope hold caused by missing economics, reconciliation, authorization, or measurement blocks every money- or delivery-moving child act or test. Read-only repairs may remain act; a child intervention may be documented as prepared-under-hold with the exact parent gate that must close. A separately approved bounded safety incident is the only exception.
+A parent hold blocks only child actions and claims implicated by its named gate, entity scope, and risk direction. Missing margin or business reconciliation blocks unsupported profitability and growth, not by itself a source-bound, owner-authorized reversible stop or rotation. Missing authority, target identity, delivered binding, or critical technical validity still blocks the relevant mutation. Do not relabel ordinary risk decisions as safety incidents. Read-only repairs remain available; document blocked interventions as prepared-under-hold.
 
 ### 6. Design the smallest useful intervention
 
-Prefer one interpretable, reversible change or a preregistered test. State the mechanism, primary metric, guardrails, exposure and lag window, sufficiency method, decision rule, and what remains constant. A bundle test may be commercially useful, but label it non-diagnostic and do not extract component learnings.
+Prefer one interpretable, reversible change or a preregistered test. State the mechanism, primary metric, guardrails, exposure and lag window, decision rule, and what remains constant. A test or learning claim needs a sufficiency method; a qualitative operational choice needs a sourced decision basis, not an invented numeric threshold. A bundle test may be commercially useful, but label it non-diagnostic and do not extract component learnings.
 
 For portfolio changes, show current and proposed allocation, marginal rationale, constraints, downside exposure, and why a smaller or staged move is insufficient.
 

@@ -1,6 +1,6 @@
-# EMB Media Buyer
+# EMB Omni Media Buyer
 
-An evidence-led, cross-platform paid-media skill for Codex. It supports strategy, account audits, account-specific diagnosis, comparable benchmarking, funnel analysis, measurement, budgeting, pacing, forecasting, objective-aware weekly business reviews, and approval-gated execution across major advertising platforms.
+EMB Omni Media Buyer is an evidence-led, cross-platform paid-media operating system for Codex. It supports strategy, account audits, account-specific diagnosis, comparable benchmarking, funnel analysis, measurement, budgeting, pacing, forecasting, objective-aware weekly business reviews, and approval-gated execution across major advertising platforms.
 
 The skill keeps platform-attributed results, advertiser-owned business outcomes, and causal evidence separate. It reconciles query coverage and conversion aliases before declaring zeros, records threshold provenance, avoids universal kill/scale rules, verifies volatile platform facts at runtime, and requires explicit approval, preflight, independent read-back, and rollback planning before live changes.
 
@@ -29,7 +29,7 @@ Use $emb-media-buyer to audit my paid media, reconcile business economics, and p
 - Security, privacy, consent, claims, and responsible-automation guardrails
 - Machine-readable reconciliation of all 55 TikTok Agentic Hub skills, with creative work routed outside the media-buyer boundary
 
-Decision-packet schema `1.2` requires `plan.threshold_records` (an empty array when no exact threshold is used). Money-moving packets need at least one sourced record; an unapproved `proposed_governance` threshold cannot authorize a live change. Execute packets also need resolved write/read tools, recomputed deltas, structured maximum financial exposure, an independent read-back tool, and an expected-state projection. Budget exposure must reproduce from its delta and period model. An applied state passes only when the fresh observed projection matches exactly; non-execute packets cannot carry staged writes.
+Decision-packet schema `1.3` separates claim strength, exposure increase/reduction/rotation/continuation, sourced decision basis, and scoped unresolved gates. Qualitative risk stops need no invented numeric threshold or safety incident; paid KEEP/WATCH needs a current continuation rationale. Unknown margin still gates unsupported growth/profit. Version `1.2` packets remain supported under their conservative legacy checks. Execute packets retain exact approval, resolved write/read tools, recomputed deltas, exposure arithmetic with nominal-reference versus verified-bound semantics, independent read-back, and rollback. An applied state passes only when the fresh observed projection matches exactly; non-execute packets cannot carry staged writes.
 
 ## Validate
 

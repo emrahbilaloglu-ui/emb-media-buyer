@@ -19,6 +19,8 @@ Recover or record:
 
 If an input is unknown, do not substitute a public benchmark without asking or labeling it. Use a scenario range and show which input changes the decision.
 
+Unknown margin prevents an ungrounded profit or scale claim; it does not by itself prevent a source-bound, authorized reversible risk stop. A useful bound can precede a full margin model: on the same valid revenue basis, period, and ledger, with nonnegative variable costs, pre-ad contribution cannot exceed that revenue. If that revenue is below spend, post-ad contribution on that limited basis is negative even at zero variable cost. State the assumptions and lag/reconciliation gaps. Do not extend this bound to another ledger, future LTV, actual net loss, incrementality, or an automatic ROAS<1 cut.
+
 ## Use a consistent revenue basis
 
 Define revenue before calculating any return metric. Possible bases include booked gross sales, net sales, collected cash, recognized revenue, or platform-attributed conversion value. Do not compare ratios built on different bases.

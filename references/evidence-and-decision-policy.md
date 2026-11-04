@@ -65,7 +65,9 @@ The evidence determines the precision of the answer.
 - Do not invent a probability, sample sufficiency, decisive date, fatigue point, or kill level from a snapshot.
 - A rate without its count and denominator is incomplete.
 - A recent outcome without its conversion lag and reporting revision state is incomplete.
-- If multiple material gates remain open, use hold, monitor, or test. Do not issue a directional budget action merely because a platform KPI looks extreme.
+- Apply each unresolved gate only to the claims, actions, entities, and risk direction it actually affects. An extreme platform KPI alone is insufficient for a budget action; an underpowered comparison alone is insufficient for either a loser claim or indefinite paid continuation.
+
+A scheduled next read is not a promised statistically decisive date. Use the existing review cadence and resolve a met trigger explicitly: recommend a change, or renew continuation with current reasons and counterevidence. Do not silently roll WATCH forward or create a new scheduler, stop date, or cap.
 
 ## Threshold policy
 
@@ -78,6 +80,8 @@ Every exact decision threshold must have one of five origins:
 5. **Proposed governance:** a new downside bound or QA tolerance proposed for owner review because no approved threshold exists.
 
 Record the threshold rule/value, origin, source, derivation, scope, approval state, and approver. A proposed-governance threshold may bound a read-only check or prepared test, but it cannot authorize a scale, cut, pause, bid, budget, or delivery change until the relevant business owner approves it. Benchmarks and creator rules may be shown only as practitioner heuristics. Never silently use them as a default.
+
+A sourced qualitative operational judgment is a decision basis, not a numeric threshold. Record its rationale, evidence, counterevidence, scope, and authority without fabricating a dollar, CPA, day, or sample cutoff. If an actual threshold is used, retain its provenance contract. An owner review band selects anomalies for investigation; it does not authorize automatic action or exclude zero-outcome entities with undefined CPA. Review those entities using spend and outcome coverage too, without converting the band into a new spend cap.
 
 ## Competing-hypothesis discipline
 
@@ -107,7 +111,17 @@ Use act, test, hold, monitor, or revert. Confidence is high, medium, or low only
 
 Do not use high confidence for a causal claim supported only by observational platform rows. Do not state numerical confidence unless a named estimator produced it.
 
-Use hold when a requested or pending action must not proceed because a material gate is open. Use monitor when no action is currently due, the present state can safely continue, and a defined future read is sufficient. A parent hold inherits downward to every money- or delivery-moving child decision until its named gate closes; read-only diagnosis and evidence repair remain allowed.
+Use hold when a requested or pending action must not proceed because a material gate is open. Use monitor when no action is currently due, the present state can acceptably continue on a stated business or owner-approved operating basis, and a defined future read is sufficient. Hold is a decision label, not native PAUSED status.
+
+Scope each parent gate to the affected entities, blocked claims/actions, and reason. Missing economics or business reconciliation blocks unsupported profit and expansion; it does not alone prohibit a verified, authorized operational pause or rotation. Identity, binding, authorization, and critical technical failures continue to block mutations that depend on them. Do not upgrade business reconciliation merely because configuration checks pass. Read-only diagnosis and evidence repair remain allowed.
+
+## Evidence symmetry for paid decisions
+
+Use the same evidence standard for CUT and KEEP/WATCH. Compare the cost of stopping too soon (lost learning or demand) with continuing too long (exposure and opportunity cost). At a material paid review, record incremental spend and new outcomes since the prior read, last outcome dates and spend since each in separate ledgers, lag/backfill, strategic role, and relevant counterevidence. Mark unknowns rather than borrowing another source's orders.
+
+Old purchases, store associations, ATC/IC, and fresh outcomes may change the judgment; none grants permanent or automatic one-day immunity. Low spend does not prove failure. A sibling's superiority is not a prerequisite for choosing to rotate away from an incumbent whose own continuation lacks justification; do not promise the sibling will do better. Two WATCH decisions cannot justify one another without independent source evidence.
+
+Keep narrative counts and values consistent with their numeric ledger. Platform purchases, click/view attribution, and verified business orders stay distinct. ATC above LPV is a diagnostic candidate, not proof of either value or tracking failure when event populations need not nest.
 
 ## What would change the conclusion
 

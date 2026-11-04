@@ -24,11 +24,23 @@ EXECUTION_STATES = {"validated_only", "accepted", "applied", "delivering", "outc
 THRESHOLD_ORIGINS = {"business_derived", "account_derived", "design_derived", "runtime_platform_derived", "proposed_governance"}
 THRESHOLD_APPROVAL_STATES = {"approved", "proposed", "not_required", "unknown"}
 CAPABILITY_MUTABILITY = {"read", "write", "mixed_dispatcher", "unknown"}
-SCHEMA_VERSION = "1.2"
+SCHEMA_VERSION = "1.3"
+SUPPORTED_SCHEMA_VERSIONS = {"1.2", SCHEMA_VERSION}
+EXPOSURE_DIRECTIONS = {"increase", "reduce", "rotate", "continue", "none"}
+CLAIM_TYPES = {"operational", "descriptive", "profitability", "superiority", "inferiority", "causal"}
+CONTINUATION_FIELDS = (
+    "since_previous_review", "last_outcomes", "exposure_context",
+    "cost_of_waiting", "cost_of_stopping", "next_information",
+    "continuation_rationale", "next_review", "decision_trigger", "trigger_response",
+)
 
 
 def _is_nonempty_string(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
+
+
+def _is_choice(value: Any, choices: set[str]) -> bool:
+    return isinstance(value, str) and value in choices
 
 
 def _is_finite_number(value: Any) -> bool:
@@ -65,6 +77,85 @@ def _required_fields(obj: dict[str, Any], fields: list[str], prefix: str, errors
             errors.append(f"{prefix}.{field} is required")
 
 
+def _source_ids(obj: dict[str, Any], prefix: str, evidence_ids: set[str], errors: list[str]) -> None:
+    source_ids = obj.get("source_ids")
+    if not isinstance(source_ids, list) or not source_ids:
+        errors.append(f"{prefix}.source_ids must be a non-empty array of evidence IDs")
+    elif any(not _is_nonempty_string(item) or item not in evidence_ids for item in source_ids):
+        errors.append(f"{prefix}.source_ids must reference existing evidence IDs")
+
+
+def _validate_directional_contract(
+    plan: dict[str, Any], decision: dict[str, Any], evidence_ids: set[str], errors: list[str], executing: bool
+) -> None:
+    """Validate an explicit decision, not silently infer a media action from metrics."""
+    direction = plan.get("exposure_direction")
+    claim_type = decision.get("claim_type")
+    if not _is_choice(direction, EXPOSURE_DIRECTIONS):
+        errors.append(f"plan.exposure_direction must be one of {sorted(EXPOSURE_DIRECTIONS)}")
+    if not _is_choice(claim_type, CLAIM_TYPES):
+        errors.append(f"decision.claim_type must be one of {sorted(CLAIM_TYPES)}")
+    if claim_type == "causal" and decision.get("causal_claim") is not True:
+        errors.append("decision.claim_type causal requires causal_claim true")
+    basis = plan.get("decision_basis")
+    if not isinstance(basis, dict):
+        errors.append("plan.decision_basis must be an object")
+    else:
+        if not _is_choice(basis.get("kind"), {"qualitative_risk", "economics", "experiment", "diagnostic"}):
+            errors.append("plan.decision_basis.kind is invalid")
+        if not _is_nonempty_string(basis.get("rationale")):
+            errors.append("plan.decision_basis.rationale must be a non-empty string")
+        _source_ids(basis, "plan.decision_basis", evidence_ids, errors)
+        if not isinstance(basis.get("counterevidence"), list) or any(
+            not _is_nonempty_string(item) for item in basis.get("counterevidence", [])
+        ):
+            errors.append("plan.decision_basis.counterevidence must be an array of non-empty strings")
+    if _is_choice(direction, {"increase", "reduce", "rotate"}) and plan.get("money_moving") is not True:
+        errors.append("delivery-changing exposure_direction requires money_moving true")
+    if _is_choice(direction, {"continue", "none"}) and plan.get("money_moving") is True:
+        errors.append("continue/none cannot conceal a money-moving change; split the scoped decisions")
+    if _is_choice(claim_type, {"superiority", "inferiority"}):
+        sufficiency = decision.get("claim_sufficiency")
+        if not isinstance(sufficiency, dict):
+            errors.append("superiority/inferiority claim requires claim_sufficiency")
+        else:
+            if not _is_nonempty_string(sufficiency.get("method")) or sufficiency.get("result") != "supported":
+                errors.append("claim_sufficiency requires a named method with supported result")
+            _source_ids(sufficiency, "decision.claim_sufficiency", evidence_ids, errors)
+    gates = plan.get("unresolved_gates")
+    if not isinstance(gates, list):
+        errors.append("plan.unresolved_gates must be an array (empty when no gate remains)")
+    else:
+        for index, gate in enumerate(gates):
+            prefix = f"plan.unresolved_gates[{index}]"
+            if not isinstance(gate, dict):
+                errors.append(f"{prefix} must be an object")
+                continue
+            for field in ("reason", "scope"):
+                if not _is_nonempty_string(gate.get(field)):
+                    errors.append(f"{prefix}.{field} must be a non-empty string")
+            for field, allowed in (("blocked_directions", EXPOSURE_DIRECTIONS), ("blocked_claims", CLAIM_TYPES)):
+                items = gate.get(field)
+                if not isinstance(items, list) or any(not isinstance(item, str) or item not in allowed for item in items):
+                    errors.append(f"{prefix}.{field} must be an array of valid values")
+            blocked_directions = gate.get("blocked_directions")
+            blocked_claims = gate.get("blocked_claims")
+            blocked = (
+                isinstance(blocked_directions, list) and direction in blocked_directions
+            ) or (isinstance(blocked_claims, list) and claim_type in blocked_claims)
+            if blocked:
+                if executing or decision.get("state") in {"act", "test", "revert", "monitor"}:
+                    errors.append(f"{prefix} blocks this decision; use hold/prepared-under-hold until the relevant gate closes")
+    if direction == "continue":
+        continuation = plan.get("continuation")
+        if not isinstance(continuation, dict):
+            errors.append("paid continuation requires plan.continuation")
+        else:
+            for field in CONTINUATION_FIELDS:
+                if not _is_nonempty_string(continuation.get(field)):
+                    errors.append(f"plan.continuation.{field} must be a non-empty string")
+
+
 def validate(packet: Any) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -72,8 +163,9 @@ def validate(packet: Any) -> tuple[list[str], list[str]]:
         return ["packet must be a JSON object"], []
 
     _required_fields(packet, ["schema_version", "created_at", "operating_class", "scope", "decision", "evidence", "metrics", "data_quality", "diagnosis", "plan", "unknowns"], "packet", errors)
-    if packet.get("schema_version") != SCHEMA_VERSION:
-        errors.append(f"schema_version must be {SCHEMA_VERSION}")
+    if not _is_choice(packet.get("schema_version"), SUPPORTED_SCHEMA_VERSIONS):
+        errors.append(f"schema_version must be one of {sorted(SUPPORTED_SCHEMA_VERSIONS)}")
+    directional = packet.get("schema_version") == SCHEMA_VERSION
     operating_class = packet.get("operating_class")
     if operating_class not in OPERATING_CLASSES:
         errors.append(f"operating_class must be one of {sorted(OPERATING_CLASSES)}")
@@ -247,7 +339,9 @@ def validate(packet: Any) -> tuple[list[str], list[str]]:
         ):
             errors.append(f"{prefix} cannot authorize a money-moving plan until owner approval")
 
-    if plan.get("money_moving") is True and not threshold_records:
+    if directional:
+        _validate_directional_contract(plan, decision, evidence_ids, errors, operating_class == "execute")
+    if not directional and plan.get("money_moving") is True and not threshold_records:
         errors.append("a money-moving plan requires at least one sourced threshold record")
 
     if state == "test":
@@ -262,13 +356,49 @@ def validate(packet: Any) -> tuple[list[str], list[str]]:
 
     economics = packet.get("economics")
     unsafe_reconciliation = data_quality.get("reconciliation") in {"unreconciled", "unavailable"}
-    if state == "act" and plan.get("money_moving") is True:
+    operational_reduction = (
+        directional
+        and _is_choice(plan.get("exposure_direction"), {"reduce", "rotate"})
+        and decision.get("claim_type") == "operational"
+        and isinstance(plan.get("decision_basis"), dict)
+        and plan["decision_basis"].get("kind") == "qualitative_risk"
+        and decision.get("causal_claim") is False
+    )
+    economics_required = (
+        directional and (
+            decision.get("claim_type") == "profitability"
+            or (plan.get("exposure_direction") == "increase" and (
+                state in {"act", "test", "revert"} or operating_class == "execute"
+            ))
+        )
+    )
+    if economics_required or (state == "act" and plan.get("money_moving") is True and not operational_reduction):
         if not isinstance(economics, dict):
             errors.append("money-moving act requires economics")
-        if unsafe_reconciliation and not isinstance(plan.get("safety_exception"), dict):
-            errors.append("money-moving act requires reconciled/partially_reconciled outcomes or a documented safety_exception")
-        if data_quality.get("state") == "fail" and not isinstance(plan.get("safety_exception"), dict):
-            errors.append("money-moving act cannot proceed with failed data quality without a documented safety_exception")
+        elif directional:
+            for field in ("acquisition_unit", "revenue_basis", "target_source", "marginal_implication"):
+                if not _is_nonempty_string(economics.get(field)):
+                    errors.append(f"economics.{field} must be a non-empty string")
+            scenarios = economics.get("scenarios")
+            if not isinstance(scenarios, list) or not scenarios or any(not isinstance(item, dict) or not item for item in scenarios):
+                errors.append("economics.scenarios must contain at least one non-empty scenario object")
+            if not isinstance(economics.get("capacity_constraints"), list):
+                errors.append("economics.capacity_constraints must be an array")
+        if directional:
+            if data_quality.get("reconciliation") not in {"reconciled", "partially_reconciled"}:
+                errors.append("directional increase/profitability or non-operational money-moving act requires reconciled/partially_reconciled outcomes")
+            if data_quality.get("state") == "fail":
+                errors.append("directional increase/profitability or non-operational money-moving act cannot proceed with failed data quality")
+        else:
+            if unsafe_reconciliation and not isinstance(plan.get("safety_exception"), dict):
+                errors.append("money-moving act requires reconciled/partially_reconciled outcomes or a documented safety_exception")
+            if data_quality.get("state") == "fail" and not isinstance(plan.get("safety_exception"), dict):
+                errors.append("money-moving act cannot proceed with failed data quality without a documented safety_exception")
+    if directional and operating_class == "execute":
+        if data_quality.get("binding") != "verified":
+            errors.append("directional execution requires verified target/delivered binding")
+        if data_quality.get("state") == "fail" or data_quality.get("critical_issues"):
+            errors.append("directional execution cannot proceed with critical data-quality issues")
 
     execution = packet.get("execution")
     if operating_class == "execute":
@@ -317,6 +447,20 @@ def validate(packet: Any) -> tuple[list[str], list[str]]:
                     percentage_delta = change.get("percentage_delta")
                     current_numeric = _is_finite_number(current_value)
                     proposed_numeric = _is_finite_number(proposed_value)
+                    if directional:
+                        field_name = str(change.get("field", "")).strip().lower()
+                        enables_delivery = "status" in field_name and str(proposed_value).strip().upper() in {"ACTIVE", "ENABLE", "ENABLED", "ON"}
+                        budget_increase = "budget" in field_name and current_numeric and proposed_numeric and float(proposed_value) > float(current_value)
+                        direction = plan.get("exposure_direction")
+                        if (enables_delivery or budget_increase) and direction != "increase":
+                            errors.append(f"{prefix} increases exposure but plan.exposure_direction is not increase")
+                        if _is_choice(direction, {"reduce", "rotate"}) and not (
+                            ("status" in field_name and str(proposed_value).strip().upper() in {"PAUSED", "DISABLED", "DISABLE", "OFF"})
+                            or ("budget" in field_name and current_numeric and proposed_numeric and float(proposed_value) < float(current_value))
+                        ):
+                            errors.append(f"{prefix} is not a supported reduction/rotation field; split unrelated writes")
+                        if _is_choice(direction, {"none", "continue"}) and ("status" in field_name or "budget" in field_name):
+                            errors.append(f"{prefix} changes delivery; cannot use exposure_direction none/continue")
                     if current_numeric != proposed_numeric:
                         errors.append(
                             f"{prefix} current_value and proposed_value must both be numeric or both be non-numeric"
@@ -374,6 +518,12 @@ def validate(packet: Any) -> tuple[list[str], list[str]]:
                                     f"{prefix}.financial_exposure.{field} must be a non-empty string"
                                 )
                         exposure_model = exposure.get("model")
+                        if directional:
+                            semantics = exposure.get("amount_semantics")
+                            if not _is_choice(semantics, {"nominal_reference", "verified_bound"}):
+                                errors.append(f"{prefix}.financial_exposure.amount_semantics must be nominal_reference or verified_bound")
+                            if semantics == "verified_bound" and not _is_nonempty_string(exposure.get("bound_evidence")):
+                                errors.append(f"{prefix}.financial_exposure.verified_bound requires separate bound_evidence; budget times period is only a nominal reference")
                         if exposure_model not in {
                             "direct_amount_delta",
                             "amount_delta_times_periods",
