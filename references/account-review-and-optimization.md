@@ -30,6 +30,8 @@ Build an entity and evidence manifest before summarizing performance. Report:
 
 A successful request is transport evidence. It does not prove complete rows, the intended date range, canonical conversion mapping, or account coverage. Reconcile totals upward and downward where possible, and state why differences remain.
 
+When choosing what to do with active paid ads, use the executable coverage and handoff gate in references/paid-decision-sweep.md. A spend-ranked excerpt or winner list is not the decision universe. Retain all scoped IDs and unresolved decisions, including paid HOLD rows, ads with zero or one attributed outcome, and historical paused rows with separately scoped dispositions.
+
 ## Route metrics by objective and business outcome
 
 First identify campaign objective, optimization event, business job, and material share of spend. Then choose the diagnostic chain.

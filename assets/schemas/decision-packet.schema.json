@@ -2,6 +2,252 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://local.codex/skills/emb-media-buyer/decision-packet.schema.json",
   "title": "Media Buyer Decision Packet",
+  "$defs": {
+    "auditText": {"type": "string", "minLength": 1},
+    "auditTime": {"type": "string", "format": "date-time"},
+    "auditRefs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/auditText"}},
+    "ledgerValue": {"type": ["number", "null"], "minimum": 0},
+    "creativeWindow": {
+      "type": "object", "required": ["start_date", "end_date"],
+      "properties": {"start_date": {"type": "string", "format": "date"}, "end_date": {"type": "string", "format": "date"}}
+    },
+    "creativeMetricCondition": {
+      "type": "object", "required": ["kind", "window", "metric", "op", "value", "source"],
+      "properties": {
+        "kind": {"const": "metric"}, "window": {"$ref": "#/$defs/creativeWindow"},
+        "metric": {"enum": ["spend", "impressions", "lpv", "atc", "checkout", "purchases"]},
+        "op": {"enum": ["lt", "lte", "eq", "gte", "gt"]}, "value": {"type": "number", "minimum": 0},
+        "source": {"$ref": "#/$defs/auditText"}
+      }
+    },
+    "creativeWatch": {
+      "type": "object", "required": ["basis", "question", "due_at", "condition", "wait_cost"],
+      "properties": {
+        "basis": {
+          "type": "object", "required": ["kind"],
+          "properties": {
+            "kind": {"enum": ["first_checkout", "low_opportunity", "first_clean_window", "material_credit", "technical_change", "approved_retention"]},
+            "window": {"$ref": "#/$defs/creativeWindow"}, "metric": {"enum": ["spend", "impressions", "lpv"]},
+            "value": {"type": "number", "minimum": 0}, "source": {"$ref": "#/$defs/auditText"},
+            "event_id": {"$ref": "#/$defs/auditText"}
+          },
+          "allOf": [
+            {"if": {"properties": {"kind": {"enum": ["first_checkout", "first_clean_window"]}}}, "then": {"required": ["window"]}},
+            {"if": {"properties": {"kind": {"const": "low_opportunity"}}}, "then": {"required": ["window", "metric", "value", "source"]}},
+            {"if": {"properties": {"kind": {"enum": ["material_credit", "technical_change"]}}}, "then": {"required": ["event_id"]}}
+          ]
+        },
+        "question": {"$ref": "#/$defs/auditText"}, "due_at": {"$ref": "#/$defs/auditTime"},
+        "condition": {
+          "oneOf": [
+            {"$ref": "#/$defs/creativeMetricCondition"},
+            {"type": "object", "required": ["kind", "event_type", "expected_state", "source"], "properties": {
+              "kind": {"const": "technical_event"}, "event_type": {"$ref": "#/$defs/auditText"},
+              "expected_state": {"$ref": "#/$defs/auditText"}, "source": {"$ref": "#/$defs/auditText"}
+            }}
+          ]
+        },
+        "wait_cost": {
+          "oneOf": [
+            {"type": "object", "required": ["kind", "currency", "lower", "upper", "source"], "properties": {
+              "kind": {"const": "estimated_range"}, "currency": {"$ref": "#/$defs/auditText"},
+              "lower": {"type": "number", "minimum": 0}, "upper": {"type": "number", "minimum": 0},
+              "source": {"$ref": "#/$defs/auditText"}
+            }},
+            {"type": "object", "required": ["kind", "condition", "source"], "properties": {
+              "kind": {"const": "observable_bound"}, "condition": {"$ref": "#/$defs/creativeMetricCondition", "properties": {"metric": {"enum": ["spend", "impressions"]}}},
+              "source": {"$ref": "#/$defs/auditText"}
+            }}
+          ]
+        },
+        "legacy_resolution": {"type": "object", "required": ["prior_as_of", "outcome", "rationale"], "properties": {
+          "prior_as_of": {"$ref": "#/$defs/auditTime"}, "outcome": {"const": "retired_unstructured"}, "rationale": {"$ref": "#/$defs/auditText"}
+        }}
+      }
+    },
+    "creativePerformanceReview": {
+      "type": "object", "required": ["window", "observed", "assessment", "rationale", "counterevidence"],
+      "properties": {
+        "window": {"enum": ["lifecycle", "last_3_closed", "last_7_closed", "partial_day", "current_epoch"]},
+        "assessment": {"enum": ["adequate", "limited", "unresolved"]},
+        "rationale": {"$ref": "#/$defs/auditText"}, "counterevidence": {"$ref": "#/$defs/auditText"},
+        "observed": {"type": "object", "required": ["spend", "impressions", "lpv", "atc", "checkout", "purchases", "purchase_value", "cpa", "roas"], "additionalProperties": {"$ref": "#/$defs/ledgerValue"}}
+      }
+    },
+    "ledgerObservation": {
+      "type": "object",
+      "required": ["spend", "platform_outcomes", "merchant_outcomes"],
+      "properties": {
+        "spend": {"$ref": "#/$defs/ledgerValue"},
+        "platform_outcomes": {"$ref": "#/$defs/ledgerValue"},
+        "merchant_outcomes": {"$ref": "#/$defs/ledgerValue"}
+      }
+    },
+    "auditContinuation": {
+      "type": "object",
+      "required": [
+        "current", "prior", "increment", "change_kind", "basis", "rationale",
+        "expected_information", "cost_of_waiting", "cost_of_stopping", "exposure_context",
+        "next_read_at", "trigger", "evidence_ids"
+      ],
+      "properties": {
+        "current": {"$ref": "#/$defs/ledgerObservation"},
+        "prior": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "$ref": "#/$defs/ledgerObservation",
+              "required": ["as_of", "evidence_ids", "currency", "timezone", "attribution", "report_time", "start_date"],
+              "dependentRequired": {"rationale": ["next_read_at"], "next_read_at": ["rationale"]},
+              "properties": {
+                "as_of": {"$ref": "#/$defs/auditTime"},
+                "evidence_ids": {"$ref": "#/$defs/auditRefs"},
+                "currency": {"$ref": "#/$defs/auditText"},
+                "timezone": {"$ref": "#/$defs/auditText"},
+                "attribution": {"$ref": "#/$defs/auditText"},
+                "report_time": {"$ref": "#/$defs/auditText"},
+                "start_date": {"type": "string", "format": "date"},
+                "rationale": {"$ref": "#/$defs/auditText"},
+                "next_read_at": {"$ref": "#/$defs/auditTime"}
+              }
+            }
+          ]
+        },
+        "increment": {
+          "type": ["object", "null"],
+          "required": ["spend", "platform_outcomes", "merchant_outcomes"],
+          "properties": {
+            "spend": {"type": ["number", "null"]},
+            "platform_outcomes": {"type": ["number", "null"]},
+            "merchant_outcomes": {"type": ["number", "null"]}
+          }
+        },
+        "change_kind": {"enum": ["first_read", "new_information", "unchanged", "attribution_revision"]},
+        "revision_explanation": {"$ref": "#/$defs/auditText"},
+        "basis": {"enum": ["economic_case", "test_information", "binding_or_lag", "approved_retention"]},
+        "rationale": {"$ref": "#/$defs/auditText"},
+        "expected_information": {"$ref": "#/$defs/auditText"},
+        "cost_of_waiting": {"$ref": "#/$defs/auditText"},
+        "cost_of_stopping": {"$ref": "#/$defs/auditText"},
+        "exposure_context": {"$ref": "#/$defs/auditText"},
+        "next_read_at": {"$ref": "#/$defs/auditTime"},
+        "evidence_ids": {"$ref": "#/$defs/auditRefs"},
+        "merchant_evidence_ids": {"$ref": "#/$defs/auditRefs"},
+        "watch_contract": {"$ref": "#/$defs/creativeWatch"},
+        "trigger": {
+          "type": "object",
+          "required": ["condition", "state", "response"],
+          "properties": {
+            "condition": {"$ref": "#/$defs/auditText"},
+            "state": {"enum": ["pending", "met", "unknown"]},
+            "response": {"$ref": "#/$defs/auditText"},
+            "reassessment": {"$ref": "#/$defs/auditText"}
+          },
+          "if": {"properties": {"state": {"const": "met"}}},
+          "then": {"required": ["reassessment"]}
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"change_kind": {"const": "first_read"}}},
+          "then": {"properties": {"prior": {"type": "null"}, "increment": {"type": "null"}}},
+          "else": {"properties": {"prior": {"type": "object"}, "increment": {"type": "object"}}}
+        },
+        {
+          "if": {"properties": {"change_kind": {"const": "attribution_revision"}}},
+          "then": {"required": ["revision_explanation"]}
+        }
+      ]
+    },
+    "creativeTestBasis": {
+      "type": "object",
+      "required": ["kind", "evidence_ids", "rationale"],
+      "properties": {
+        "kind": {"enum": ["observed_ad_performance", "observed_post_rotation", "verified_independent_issue"]},
+        "evidence_ids": {"$ref": "#/$defs/auditRefs"},
+        "rationale": {"$ref": "#/$defs/auditText"},
+        "metric_window": {"enum": ["lifecycle", "last_3_closed", "last_7_closed"]},
+        "anchor_ad_id": {"$ref": "#/$defs/auditText"},
+        "window_start": {"type": "string", "format": "date"},
+        "window_end": {"type": "string", "format": "date"},
+        "issue_type": {"enum": ["policy", "destination", "measurement", "owner_guardrail"]},
+        "event_id": {"$ref": "#/$defs/auditText"}
+      },
+      "allOf": [
+        {"if": {"properties": {"kind": {"const": "observed_ad_performance"}}}, "then": {"required": ["metric_window"]}},
+        {"if": {"properties": {"kind": {"const": "observed_post_rotation"}}}, "then": {"required": ["anchor_ad_id", "window_start", "window_end"]}},
+        {"if": {"properties": {"kind": {"const": "verified_independent_issue"}}}, "then": {"required": ["issue_type", "event_id"]}}
+      ]
+    },
+    "paidAudit": {
+      "type": "object",
+      "required": ["as_of", "campaign_id", "coverage_mode", "complete_for_decision", "evidence_ids", "decisions"],
+      "properties": {
+        "as_of": {"$ref": "#/$defs/auditTime"},
+        "campaign_id": {"$ref": "#/$defs/auditText"},
+        "coverage_mode": {"enum": ["full_sweep", "isolated_risk_reduction"]},
+        "decision_context": {"const": "creative_test"},
+        "complete_for_decision": {"type": "boolean"},
+        "evidence_ids": {"$ref": "#/$defs/auditRefs"},
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["entity_id", "binding_epoch", "observed_paid_delivery", "disposition", "evidence_ids"],
+            "properties": {
+              "entity_id": {"$ref": "#/$defs/auditText"},
+              "binding_epoch": {"type": ["string", "null"], "minLength": 1},
+              "observed_paid_delivery": {"type": ["boolean", "null"]},
+              "disposition": {"enum": ["continue", "reduce", "rotate", "no_paid_delivery", "unknown"]},
+              "evidence_ids": {"$ref": "#/$defs/auditRefs"},
+              "continuation": {"$ref": "#/$defs/auditContinuation"},
+              "performance_review": {"$ref": "#/$defs/creativePerformanceReview"},
+              "action_review": {
+                "type": "object",
+                "required": ["rationale", "parent_effect", "counterevidence", "next_read_at"],
+                "properties": {
+                  "rationale": {"$ref": "#/$defs/auditText"},
+                  "parent_effect": {"$ref": "#/$defs/auditText"},
+                  "counterevidence": {"$ref": "#/$defs/auditText"},
+                  "next_read_at": {"$ref": "#/$defs/auditTime"},
+                  "retention_override_evidence_ids": {"$ref": "#/$defs/auditRefs"},
+                  "creative_test_basis": {"$ref": "#/$defs/creativeTestBasis"}
+                }
+              }
+            },
+            "allOf": [
+              {
+                "if": {"properties": {"observed_paid_delivery": {"const": true}}},
+                "then": {"properties": {"disposition": {"enum": ["continue", "reduce", "rotate"]}}}
+              },
+              {
+                "if": {"properties": {"disposition": {"const": "continue"}}},
+                "then": {"required": ["continuation"], "properties": {"observed_paid_delivery": {"const": true}}}
+              },
+              {
+                "if": {"properties": {"disposition": {"const": "no_paid_delivery"}}},
+                "then": {"properties": {"observed_paid_delivery": {"const": false}}}
+              },
+              {
+                "if": {"properties": {"disposition": {"enum": ["reduce", "rotate"]}}},
+                "then": {"required": ["action_review"]}
+              }
+            ]
+          }
+        }
+      },
+      "if": {"required": ["decision_context"]},
+      "then": {"properties": {"decisions": {"items": {
+        "allOf": [
+          {"if": {"properties": {"disposition": {"enum": ["reduce", "rotate"]}}},
+           "then": {"properties": {"action_review": {"required": ["creative_test_basis"]}}}},
+          {"if": {"properties": {"observed_paid_delivery": {"const": true}}}, "then": {"required": ["performance_review"]}},
+          {"if": {"properties": {"disposition": {"const": "continue"}}},
+           "then": {"properties": {"continuation": {"required": ["watch_contract"]}}}}
+        ]
+      }}}}
+    }
+  },
   "type": "object",
   "required": [
     "schema_version",
@@ -17,7 +263,7 @@
     "unknowns"
   ],
   "properties": {
-    "schema_version": {"enum": ["1.2", "1.3"]},
+    "schema_version": {"enum": ["1.2", "1.3", "1.4"]},
     "created_at": {"type": "string", "format": "date-time"},
     "operating_class": {
       "enum": ["read_only", "prepare", "execute", "monitor"]
@@ -37,6 +283,7 @@
         "business_outcome": {"type": "string", "minLength": 1},
         "optimization_event": {"type": ["string", "null"]},
         "attribution": {"type": ["string", "null"]},
+        "report_time": {"$ref": "#/$defs/auditText"},
         "conversion_lag": {"type": ["string", "null"]}
       },
       "additionalProperties": true
@@ -422,6 +669,7 @@
       },
       "additionalProperties": true
     },
+    "paid_audit": {"$ref": "#/$defs/paidAudit"},
     "unknowns": {
       "type": "array",
       "items": {
@@ -438,7 +686,7 @@
   },
   "allOf": [
     {
-      "if": {"properties": {"schema_version": {"const": "1.3"}}, "required": ["schema_version"]},
+      "if": {"properties": {"schema_version": {"enum": ["1.3", "1.4"]}}, "required": ["schema_version"]},
       "then": {
         "properties": {
           "decision": {
@@ -457,10 +705,6 @@
           "plan": {
             "required": ["exposure_direction", "decision_basis", "unresolved_gates"],
             "allOf": [
-              {
-                "if": {"properties": {"exposure_direction": {"const": "continue"}}, "required": ["exposure_direction"]},
-                "then": {"required": ["continuation"]}
-              },
               {
                 "if": {"properties": {"exposure_direction": {"enum": ["increase", "reduce", "rotate"]}}, "required": ["exposure_direction"]},
                 "then": {"properties": {"money_moving": {"const": true}}},
@@ -483,6 +727,48 @@
                   }
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {"const": "1.3"},
+          "plan": {"required": ["exposure_direction"], "properties": {"exposure_direction": {"const": "continue"}}}
+        },
+        "required": ["schema_version", "plan"]
+      },
+      "then": {"properties": {"plan": {"required": ["continuation"]}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {"const": "1.4"},
+          "plan": {"required": ["exposure_direction"], "properties": {"exposure_direction": {"const": "continue"}}}
+        },
+        "required": ["schema_version", "plan"]
+      },
+      "then": {"required": ["paid_audit"]}
+    },
+    {
+      "if": {"required": ["paid_audit"]},
+      "then": {"properties": {"schema_version": {"const": "1.4"}, "scope": {"required": ["report_time"]}}}
+    },
+    {
+      "if": {
+        "required": ["paid_audit", "decision", "plan"],
+        "properties": {
+          "decision": {"required": ["state"], "properties": {"state": {"const": "hold"}}},
+          "plan": {"required": ["exposure_direction"], "properties": {"exposure_direction": {"const": "none"}}}
+        }
+      },
+      "then": {
+        "properties": {
+          "paid_audit": {
+            "properties": {
+              "decisions": {"not": {"contains": {"required": ["observed_paid_delivery"], "properties": {"observed_paid_delivery": {"const": true}}}}}
             }
           }
         }

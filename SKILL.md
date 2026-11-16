@@ -28,6 +28,7 @@ The table is cumulative, not a reading checklist. Load only named platforms and 
 |---|---|
 | Any audit, diagnosis, or recommendation | references/evidence-and-decision-policy.md; references/data-quality-and-diagnosis.md |
 | Account-specific diagnosis, benchmark, funnel, WBR, health review, or optimization | references/account-review-and-optimization.md |
+| Audit, daily review, or recurring workflow that makes decisions on active paid ads | references/paid-decision-sweep.md |
 | Channel strategy, account architecture, launch, or roadmap | references/strategy-and-planning.md |
 | Economics, targets, forecast, scale, cut, or allocation | references/intake-and-unit-economics.md; references/budget-pacing-and-scaling.md |
 | Attribution, lift, experiment, or MMM | references/measurement-and-experimentation.md |
@@ -47,6 +48,8 @@ The table is cumulative, not a reading checklist. Load only named platforms and 
 | Volatile fact, current feature, eligibility, external claim, or disputed rule | references/runtime-source-registry.md; references/contradiction-ledger.md; consult references/source-ledger.md as the research index |
 
 Use only the relevant command in `scripts/media_math.py` or `scripts/account_review.py`, and only after its semantic input contract is satisfied. Use `scripts/validate_decision_packet.py` for a requested machine-readable decision packet and before any live change packet; a Markdown audit does not need a duplicate JSON packet unless the workflow asks for one. Their input contracts are in `references/script-usage.md`.
+
+For an active paid decision audit, run `scripts/account_review.py paid-sweep` against the independent native inventory and full report scope before ranking or marking decisions complete. Keep its machine coverage and decision handoff artifact even when the user wants only a short summary. For creative tests, use `scripts/creative_review_plan.py`, then validate against the sweep with `--creative-test` and frozen `--creative-history` for recurring WATCH. Review both risk lanes and make an explicit choice per paid ad; exclusions from the cut list are unresolved until individually decided, not automatic WATCH. Evaluate the ad's own evidence before set implementation effects. Continued paid exposure needs a measured fact and time-bounded question; changed prose or a later deadline is not new evidence. These checks apply at the existing cadence; they do not create automation or execution authority. Small status queries and ordinary trend reviews do not need this branch.
 
 ## Non-negotiable reasoning rules
 

@@ -572,6 +572,15 @@ def review(payload: dict[str, Any]) -> dict[str, Any]:
 
     has_current_entities = "current_entities" in payload
     has_prior_entities = "prior_entities" in payload
+    expected_ids = None
+    if "expected_active_entity_ids" in scope:
+        supplied = _list(scope["expected_active_entity_ids"], "scope.expected_active_entity_ids")
+        validated = [_string(item, "scope.expected_active_entity_ids item") for item in supplied]
+        expected_ids = set(validated)
+        if len(expected_ids) != len(validated):
+            raise InputError("scope.expected_active_entity_ids contains duplicate IDs; use paid-sweep for census diagnostics")
+        if not has_current_entities:
+            raise InputError("independent expected active IDs require current_entities; use paid-sweep for full census")
     if has_current_entities != has_prior_entities:
         raise InputError(
             "current_entities and prior_entities must be supplied together"
@@ -583,6 +592,10 @@ def review(payload: dict[str, Any]) -> dict[str, Any]:
         prior_rows = _clean_entity_rows(payload.get("prior_entities"), "prior_entities")
         current_map = {item["id"]: item for item in current_rows}
         prior_map = {item["id"]: item for item in prior_rows}
+        if expected_ids is not None and set(current_map) != expected_ids:
+            missing = sorted(expected_ids - set(current_map))
+            extra = sorted(set(current_map) - expected_ids)
+            raise InputError(f"current_entities differs from independent expected active IDs; missing={missing!r}, extra={extra!r}; use paid-sweep for full census")
         movers: list[dict[str, Any]] = []
         for entity_id in sorted(set(current_map) | set(prior_map)):
             now = current_map.get(entity_id, {"numerator": 0.0, "denominator": 0.0})
@@ -659,12 +672,46 @@ def _read_payload(path: str) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=sorted(COMMANDS))
+    parser.add_argument("command", choices=sorted({*COMMANDS, "paid-sweep"}))
     parser.add_argument("--input", default="-", help="JSON file path, or - for stdin")
+    parser.add_argument("--top", type=int, help="Paid-sweep summary limit only; never truncates the census")
     args = parser.parse_args(argv)
+    if args.top is not None and args.command != "paid-sweep":
+        parser.error("--top applies only to paid-sweep")
     try:
-        result = COMMANDS[args.command](_read_payload(args.input))
-    except (InputError, OSError) as exc:
+        payload = _read_payload(args.input)
+        if args.command == "paid-sweep":
+            from paid_sweep import sweep
+
+            result = sweep(payload, top=args.top)
+            if "creative_evidence_events" in payload:
+                events = payload["creative_evidence_events"]
+                if not isinstance(events, list) or any(not isinstance(event, dict) for event in events):
+                    raise InputError("creative_evidence_events must be a list of independently sourced event objects")
+                # These are normalized attestations, not facts verified by this
+                # transport. The decision verifier binds each relied-on event.
+                result["creative_evidence_events"] = events
+            result["audit_ready"] = False
+            result["missing_current_decision_ids"] = result["coverage"]["expected_active_ids"]
+            if "decision_handoff" in payload:
+                from paid_decisions import InputError as HandoffInputError, handoff
+
+                supplied = _object(payload["decision_handoff"], "decision_handoff")
+                try:
+                    decision_handoff = handoff({**supplied, "scope": result["scope"], "inventory": payload["inventory"],
+                                                 "current_rows": result["entities"],
+                                                 "current_meta_source": payload["lifecycle"]["manifest"].get("source_id")})
+                except HandoffInputError as exc:
+                    decision_handoff = {"complete_for_decision": False, "input_error": str(exc)}
+                result["decision_handoff"] = decision_handoff
+                current_ids = {row["binding"]["ad_id"] for row in decision_handoff.get("decisions", [])
+                               if row.get("current") is not None and row.get("status") != "unresolved"}
+                missing_ids = sorted(set(result["coverage"]["expected_active_ids"]) - current_ids)
+                result["missing_current_decision_ids"] = missing_ids
+                result["audit_ready"] = (result["complete_for_decision"] and decision_handoff["complete_for_decision"] and not missing_ids)
+        else:
+            result = COMMANDS[args.command](payload)
+    except (ValueError, OSError) as exc:
         print(
             json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False),
             file=sys.stderr,

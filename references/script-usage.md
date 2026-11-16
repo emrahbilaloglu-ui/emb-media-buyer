@@ -166,7 +166,7 @@ Run from the skill directory or by absolute path:
 
     python3 scripts/account_review.py COMMAND --input INPUT.json
 
-Commands are `benchmark`, `funnel`, and `review`. A single hyphen reads JSON from stdin. Output is JSON. Invalid definitions, open comparability gates, incomplete lag contracts, duplicate identifiers, or structurally impossible inputs return exit code 2.
+Commands are `benchmark`, `funnel`, `review`, and `paid-sweep`. A single hyphen reads JSON from stdin. Output is JSON. Invalid definitions, open comparability gates, incomplete lag contracts, duplicate identifiers, or structurally impossible inputs return exit code 2. For the separately scoped paid audit, read references/paid-decision-sweep.md; an emitted incomplete ledger is not an approval or a pass.
 
 ### benchmark
 
@@ -284,6 +284,14 @@ Use for objective-aware current-versus-prior ratio aggregation and multi-period 
 
 Optional `current_entities` and `prior_entities` arrays use `id`, optional `name`, `numerator`, and `denominator`. The output describes entity numerator/denominator movement and reconciles their sums to the period totals. It does not call entity movement a causal contribution to a ratio change. The multi-period slope is descriptive and carries no persistence, significance, or materiality claim.
 
+The `review` command still requires non-overlapping trend periods. If supplied, `scope.expected_active_entity_ids` must match the current entity slice independently of totals; use `paid-sweep` for a complete campaign census and overlapping lifecycle/7/3/partial windows.
+
+## creative_review_plan.py
+
+    python3 scripts/creative_review_plan.py creative-review-input.json --top 15
+
+Read-only projection of the complete `paid_sweep`, exact `adjudications` and frozen history. Missing decisions stay unresolved; `--top` changes display only. A proposed reduction awaiting separate approval retains its first proposal time and its comparable observed spend change when sourced. `packet_eligible` means the builder can emit a `paid_audit` projection, not authority or validator PASS. See references/paid-decision-sweep.md and references/output-contracts.md.
+
 ## validate_decision_packet.py
 
 Validate a packet:
@@ -304,5 +312,7 @@ Use --strict to fail on warnings as well as errors. The validator checks:
 - rejection of any execution block on read-only, prepare, or monitor packets;
 - exact approval, changes, preflight, read-back, rollback, and execution state for execute;
 - rates without denominators and ambiguous qualifiers.
+
+For creative TEST use `--paid-sweep sweep.json --creative-test --strict`; add `--creative-history history.json` for recurring WATCH. A changed sentence is not a qualifying new fact. Metric condition `source` identifies the frozen rule's provenance; the measured value and its report source are resolved independently from the current native ad/window. The typed checks do not independently prove that source attestations or agent business judgments are true.
 
 The human/tooling schema is assets/schemas/decision-packet.schema.json. Passing validation means the packet is structurally and semantically ready for review; it does not prove that external evidence is true or that a live change applied.

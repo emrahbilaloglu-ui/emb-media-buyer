@@ -31,6 +31,10 @@ Use $emb-media-buyer to audit my paid media, reconcile business economics, and p
 
 Decision-packet schema `1.3` separates claim strength, exposure increase/reduction/rotation/continuation, sourced decision basis, and scoped unresolved gates. Qualitative risk stops need no invented numeric threshold or safety incident; paid KEEP/WATCH needs a current continuation rationale. Unknown margin still gates unsupported growth/profit. Version `1.2` packets remain supported under their conservative legacy checks. Execute packets retain exact approval, resolved write/read tools, recomputed deltas, exposure arithmetic with nominal-reference versus verified-bound semantics, independent read-back, and rollback. An applied state passes only when the fresh observed projection matches exactly; non-execute packets cannot carry staged writes.
 
+For an active paid decision audit, `account_review.py paid-sweep` checks an independent native inventory against lifecycle and daily data before ranking. It retains the full ledger behind any top-N display and supports recurring decision handoff and batch parent impact. Use decision-packet `1.4` with `--paid-sweep` to verify the paid scope and continuation decisions; see [the sweep contract](references/paid-decision-sweep.md). These checks are read-only and do not create an automation or execution authority.
+
+For creative tests, `creative_review_plan.py` joins the census to explicit ad decisions with no fallback WATCH. `--creative-test` validates measured opportunity and bounded continuation; supply the preceding frozen packet and sweep with `--creative-history` for recurring WATCH. The approval list is distinct from actual native application.
+
 ## Validate
 
 ```bash

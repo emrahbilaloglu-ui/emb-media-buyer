@@ -716,5 +716,521 @@ class DirectionalContractTests(unittest.TestCase):
         self.assertTrue(list(schema_validator.iter_errors(packet)))
 
 
+def paid_audit_packet() -> tuple[dict, dict]:
+    """Synthetic, local-only paired artifact for the independently scoped audit branch."""
+    packet = directional_packet(direction="continue")
+    packet["schema_version"] = "1.4"
+    packet["created_at"] = "2026-11-07T15:10:00+03:00"
+    packet["scope"]["entities"] = ["ad_069", "ad_zero"]
+    packet["scope"]["report_time"] = "impression"
+    packet["evidence"][0].update({
+        "source": "synthetic independent paid-sweep and underlying ad/day observations",
+        "claim": "ad_069 has observed paid delivery; ad_zero is active but has verified zero exposure.",
+        "retrieved_at": "2026-11-07T15:00:00+03:00",
+    })
+    sweep = {
+        "command": "paid-sweep",
+        "scope": {
+            "platform": "meta", "account_id": "act_123", "campaign_id": "campaign_1",
+            "currency": "TRY", "timezone": "Europe/Istanbul", "as_of": "2026-11-07T15:00:00+03:00",
+            "attribution": packet["scope"]["attribution"], "report_time": packet["scope"]["report_time"],
+        },
+        "coverage": {"expected_active_ids": ["ad_069", "ad_zero"], "inventory_manifest": {
+            "independent": True, "source_id": "synthetic native inventory", "complete": True,
+            "pagination_complete": True, "retrieved_at": "2026-11-07T15:00:00+03:00",
+        }},
+        "complete_for_decision": True,
+        "entities": [
+            {
+                "ad_id": ad_id, "account_id": "act_123", "campaign_id": "campaign_1",
+                "parent_id": "set_1", "epoch_id": "binding_1", "binding_verified": True,
+                "lifecycle_start": "2026-11-01",
+                "configured_status": "ACTIVE", "effective_status": "ACTIVE",
+                "disposition": "active_decision", "coverage_state": "observed",
+                "current_paid_delivery": paid,
+                "metrics": {"lifecycle": {"spend": spend, "purchases": purchases}},
+            }
+            for ad_id, paid, spend, purchases in (("ad_069", True, 216.73, 1), ("ad_zero", False, 0, 0))
+        ],
+    }
+    packet["paid_audit"] = {
+        "campaign_id": "campaign_1", "as_of": sweep["scope"]["as_of"], "coverage_mode": "full_sweep",
+        "complete_for_decision": True, "evidence_ids": ["e1"],
+        "decisions": [
+            {
+                "entity_id": "ad_069", "binding_epoch": "binding_1", "observed_paid_delivery": True,
+                "disposition": "continue", "evidence_ids": ["e1"],
+                "continuation": {
+                    "current": {"spend": 216.73, "platform_outcomes": 1, "merchant_outcomes": None},
+                    "prior": None, "increment": None, "change_kind": "first_read",
+                    "basis": "test_information", "evidence_ids": ["e1"],
+                    "rationale": "Use one existing review interval to observe closure of the latest completed exposure cohort under the current test authorization.",
+                    "expected_information": "Completed cohort joins can show whether the recent click credit has any independently matched merchant outcome.",
+                    "cost_of_waiting": "Current allocation may keep buying impressions at unchanged parent budget.",
+                    "cost_of_stopping": "Could remove the only currently bound source for this cohort before the next scheduled read.",
+                    "exposure_context": "Existing test allocation; no change to set budget or cash cap.",
+                    "next_read_at": "2026-11-08T15:00:00+03:00",
+                    "trigger": {
+                        "condition": "The completed cohort arrives without a matched outcome and further cost accumulates.",
+                        "state": "pending", "response": "Reassess operational rotation against actual new evidence and current authority.",
+                    },
+                },
+            },
+            {
+                "entity_id": "ad_zero", "binding_epoch": "binding_1", "observed_paid_delivery": False,
+                "disposition": "no_paid_delivery", "evidence_ids": ["e1"],
+            },
+        ],
+    }
+    return packet, sweep
+
+
+class PaidAuditContractTests(unittest.TestCase):
+    def test_exact_legacy_placeholder_repro_is_rejected_without_breaking_small_hold(self) -> None:
+        packet = directional_packet(direction="continue")
+        packet["plan"]["continuation"] = {field: "generic placeholder" for field in validator.CONTINUATION_FIELDS}
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("same placeholder" in error for error in errors))
+        small_hold = directional_packet()
+        self.assertEqual(validator.validate(small_hold), ([], []))
+        small_hold["schema_version"] = "1.4"
+        self.assertEqual(validator.validate(small_hold), ([], []))
+
+    def test_legacy_paid_hold_repro_requires_migrating_to_typed_audit(self) -> None:
+        packet, sweep = paid_audit_packet()
+        legacy = directional_packet()
+        legacy["scope"]["entities"] = ["ad_069"]
+        legacy["decision"]["summary"] = "The synthetic active ad continues to spend under HOLD."
+        self.assertEqual(validator.validate(legacy), ([], []))  # free text is not a delivery contract
+        errors, _ = validator.validate(legacy, paid_sweep=sweep)
+        self.assertTrue(any("schema_version 1.4" in error for error in errors))
+
+        packet["plan"]["exposure_direction"] = "none"
+        row = packet["paid_audit"]["decisions"][0]
+        row.pop("continuation")
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("HOLD/none" in error for error in errors))
+        self.assertTrue(any("required for active paid continuation" in error for error in errors))
+
+    def test_paid_hold_passes_only_with_bound_evidence_and_explicit_continuation(self) -> None:
+        packet, sweep = paid_audit_packet()
+        self.assertEqual(validator.validate(packet, paid_sweep=sweep), ([], []))
+        self.assertEqual(validator.validate(packet, paid_sweep={"ok": True, "result": sweep}), ([], []))
+        errors, _ = validator.validate(packet)
+        self.assertTrue(any("separately supplied paid-sweep" in error for error in errors))
+        record = packet["paid_audit"]["decisions"][0]
+        record["observed_paid_delivery"] = False
+        record["binding_epoch"] = "wrong_epoch"
+        record["continuation"]["current"]["platform_outcomes"] = 9
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("observed_paid_delivery" in error for error in errors))
+        self.assertTrue(any("binding_epoch" in error for error in errors))
+        self.assertTrue(any("current.platform_outcomes" in error for error in errors))
+
+    def test_purchase_positive_does_not_supply_keep_basis(self) -> None:
+        packet, sweep = paid_audit_packet()
+        continuation = packet["paid_audit"]["decisions"][0]["continuation"]
+        self.assertEqual(continuation["current"]["platform_outcomes"], 1)
+        continuation["basis"] = "positive_purchase"
+        continuation["next_read_at"] = packet["paid_audit"]["as_of"]
+        continuation["evidence_ids"] = ["invented"]
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        for expected in ("positive purchase alone", "later than audit as_of", "existing evidence IDs"):
+            self.assertTrue(any(expected in error for error in errors), errors)
+
+    def test_watch_reassessment_and_separate_ledger_deltas_are_enforced(self) -> None:
+        packet, sweep = paid_audit_packet()
+        continuation = packet["paid_audit"]["decisions"][0]["continuation"]
+        continuation.update({
+            "change_kind": "new_information",
+            "prior": {
+                "as_of": "2026-11-06T15:00:00+03:00", "spend": 59.15, "platform_outcomes": 1,
+                "merchant_outcomes": None, "rationale": continuation["rationale"],
+                "next_read_at": "2026-11-07T15:00:00+03:00", "evidence_ids": ["e1"],
+                "currency": "TRY", "timezone": "Europe/Istanbul", "attribution": packet["scope"]["attribution"],
+                "report_time": packet["scope"]["report_time"], "start_date": "2026-11-01",
+            },
+            "increment": {"spend": 157.58, "platform_outcomes": 0, "merchant_outcomes": 0},
+        })
+        continuation["trigger"]["state"] = "met"
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        for expected in ("unchanged prior", "met trigger", "merchant_outcomes must be null"):
+            self.assertTrue(any(expected in error for error in errors), errors)
+
+        continuation["rationale"] = "Source was rebound after the prior observation; use the new matched cohort to distinguish old-credit carryover from current delivery."
+        continuation["trigger"]["reassessment"] = "Old credit remained flat after +157.58 TRY; new verified binding evidence supports one bounded read, not retention based on the old sale."
+        continuation["increment"]["merchant_outcomes"] = None
+        self.assertEqual(validator.validate(packet, paid_sweep=sweep), ([], []))
+        continuation["increment"]["spend"] = 0
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("increment.spend must equal current minus prior" in error for error in errors))
+
+    def test_incompatible_report_time_cannot_supply_an_increment(self) -> None:
+        packet, sweep = paid_audit_packet()
+        continuation = packet["paid_audit"]["decisions"][0]["continuation"]
+        continuation.update({
+            "change_kind": "new_information",
+            "prior": {
+                "as_of": "2026-11-06T15:00:00+03:00", "spend": 59.15, "platform_outcomes": 1,
+                "merchant_outcomes": None, "evidence_ids": ["e1"],
+                "currency": "TRY", "timezone": "Europe/Istanbul", "attribution": packet["scope"]["attribution"],
+                "report_time": "conversion", "start_date": "2026-11-01",
+            },
+            "increment": {"spend": 157.58, "platform_outcomes": 0, "merchant_outcomes": None},
+        })
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("incomparable scope" in error for error in errors))
+        continuation["increment"].update(spend=None, platform_outcomes=None)
+        self.assertEqual(validator.validate(packet, paid_sweep=sweep), ([], []))
+        packet["scope"]["attribution"] = "different click window"
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("scope.attribution must match" in error for error in errors))
+
+    def test_same_epoch_handoff_blocks_first_read_and_binds_prior(self) -> None:
+        packet, sweep = paid_audit_packet()
+        row = sweep["entities"][0]
+        previous_meta = {
+            "as_of": "2026-11-06T15:00:00+03:00", "spend": 59.15, "purchases": 1,
+            "currency": "TRY", "timezone": "Europe/Istanbul", "attribution": packet["scope"]["attribution"],
+            "report_time": "impression", "start_date": "2026-11-01",
+        }
+        sweep["decision_handoff"] = {"decisions": [{
+            "binding": {field: row[field] for field in ("ad_id", "account_id", "campaign_id", "parent_id", "epoch_id")},
+            "prior": {"epoch_id": row["epoch_id"], "as_of": previous_meta["as_of"], "observation": {"meta": previous_meta}},
+            "observation": {"meta_change": {"state": "comparable", "deltas": {"spend": 157.58, "purchases": 0}}},
+        }]}
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("cannot claim first_read" in error for error in errors))
+        continuation = packet["paid_audit"]["decisions"][0]["continuation"]
+        continuation.update({
+            "change_kind": "new_information",
+            "prior": {
+                **{key: value for key, value in previous_meta.items() if key != "purchases"},
+                "platform_outcomes": 1, "merchant_outcomes": None, "evidence_ids": ["e1"],
+            },
+            "increment": {"spend": 157.58, "platform_outcomes": 0, "merchant_outcomes": None},
+        })
+        self.assertEqual(validator.validate(packet, paid_sweep=sweep), ([], []))
+        continuation["prior"]["as_of"] = "2026-11-06T14:00:00+03:00"
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("prior.as_of does not match" in error for error in errors))
+
+    def test_independent_active_ids_cannot_be_hidden_by_packet_totals(self) -> None:
+        packet, sweep = paid_audit_packet()
+        packet["paid_audit"]["decisions"].pop()
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("coverage mismatch" in error and "ad_zero" in error for error in errors))
+        sweep["entities"].pop()
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("without exact active decision ID equality" in error for error in errors))
+
+    def test_carried_epoch_history_does_not_replace_current_binding_or_reopen_first_read(self) -> None:
+        packet, sweep = paid_audit_packet()
+        row = sweep["entities"][0]
+        old = {key: row[key] for key in ("account_id", "campaign_id", "parent_id", "ad_id", "epoch_id")}
+        row["epoch_id"] = "binding_2"
+        current = {**old, "epoch_id": row["epoch_id"]}
+        record = packet["paid_audit"]["decisions"][0]
+        record["binding_epoch"] = row["epoch_id"]
+        continuation = record["continuation"]
+        previous = {
+            "as_of": "2026-11-06T15:00:00+03:00", "spend": 59.15, "purchases": 1,
+            "currency": "TRY", "timezone": "Europe/Istanbul", "attribution": packet["scope"]["attribution"],
+            "report_time": "impression", "start_date": "2026-11-01",
+        }
+        prior = {**old, "as_of": previous["as_of"], "observation": {"meta": previous},
+                 "reason": continuation["rationale"], "next_review": {"at": packet["paid_audit"]["as_of"]}}
+        carry = {"disposition": "carry", "to_epoch_id": row["epoch_id"]}
+        sweep["decision_handoff"] = {"complete_for_decision": True, "decisions": [
+            {"binding": old, "status": "rebind", "current": None, "prior": prior, "rebind": carry},
+            {"binding": current, "status": "open", "current": current, "prior": prior, "rebind": carry,
+             "observation": {"meta_change": {"state": "comparable", "deltas": {"spend": 157.58, "purchases": 0}}}},
+        ]}
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("cannot claim first_read" in error for error in errors))
+        self.assertFalse(any("binding mismatch" in error for error in errors))
+        continuation.update(
+            change_kind="new_information",
+            prior={**{key: value for key, value in previous.items() if key != "purchases"},
+                   "platform_outcomes": 1, "merchant_outcomes": None, "evidence_ids": ["e1"]},
+            increment={"spend": 157.58, "platform_outcomes": 0, "merchant_outcomes": None},
+        )
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("same continuation reason from decision_handoff" in error for error in errors))
+        continuation["rationale"] = "The verified new landing treatment warrants a dated clean-window read; prior ad-ID exposure remains on record."
+        self.assertEqual(validator.validate(packet, paid_sweep=sweep), ([], []))
+        sweep["decision_handoff"]["decisions"][0]["current"] = old
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("current epoch mismatch" in error for error in errors))
+
+    def test_incomplete_sweep_blocks_general_execution_but_allows_independently_verified_isolated_pause(self) -> None:
+        _, sweep = paid_audit_packet()
+        sweep["entities"][1].update({
+            "parent_id": "set_2", "coverage_state": "missing", "current_paid_delivery": None,
+        })
+        sweep["complete_for_decision"] = False
+        packet = operational_pause_packet()
+        packet["schema_version"] = "1.4"
+        packet["created_at"] = "2026-11-07T15:10:00+03:00"
+        packet["scope"]["report_time"] = sweep["scope"]["report_time"]
+        packet["paid_audit"] = {
+            "as_of": sweep["scope"]["as_of"], "campaign_id": "campaign_1", "coverage_mode": "isolated_risk_reduction",
+            "complete_for_decision": False, "evidence_ids": ["e1"],
+            "decisions": [{
+                "entity_id": "ad_069", "binding_epoch": "binding_1", "observed_paid_delivery": True,
+                "disposition": "rotate", "evidence_ids": ["e1"],
+                "action_review": {
+                    "rationale": "Exact approved and independently verified source-ad pause.",
+                    "parent_effect": "Shared set unchanged; sibling spend is uncertain.",
+                    "counterevidence": "One attributed purchase and potential later credit; no comparison result.",
+                    "next_read_at": "2026-11-08T15:00:00+03:00",
+                },
+            }],
+        }
+        self.assertEqual(validator.validate(packet, paid_sweep=sweep), ([], []))
+        sweep["coverage"]["inventory_manifest"]["pagination_complete"] = False
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("complete native parent roster" in error for error in errors))
+        sweep["coverage"]["inventory_manifest"]["pagination_complete"] = True
+        packet["paid_audit"]["coverage_mode"] = "full_sweep"
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("incomplete paid-sweep" in error for error in errors))
+        packet["paid_audit"]["coverage_mode"] = "isolated_risk_reduction"
+        sweep["entities"][1]["parent_id"] = "set_1"
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("active sibling/target ad_zero" in error for error in errors))
+        sweep["entities"][1]["parent_id"] = "set_2"
+        row = sweep["entities"][0]
+        sweep["decision_handoff"] = {"decisions": [{
+            "binding": {field: row[field] for field in ("ad_id", "account_id", "campaign_id", "parent_id", "epoch_id")},
+            "main_retained": True,
+        }]}
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("retention_override_evidence_ids" in error for error in errors))
+        packet["evidence"].append({
+            "id": "retention_override", "label": "verified_fact",
+            "claim": "Synthetic owner explicitly overrides retention for this exact ad pause.",
+            "source": "fixture exact scope approval", "retrieved_at": packet["created_at"], "limitations": [],
+        })
+        packet["paid_audit"]["decisions"][0]["action_review"]["retention_override_evidence_ids"] = ["retention_override"]
+        self.assertEqual(validator.validate(packet, paid_sweep=sweep), ([], []))
+        sweep["entities"][0]["binding_verified"] = False
+        errors, _ = validator.validate(packet, paid_sweep=sweep)
+        self.assertTrue(any("independently covered target" in error for error in errors))
+
+    def test_paid_audit_shape_is_enforced_by_json_schema(self) -> None:
+        try:
+            from jsonschema import Draft202012Validator
+        except ImportError:
+            self.skipTest("optional jsonschema package not installed")
+        schema_path = SCRIPT.parents[1] / "assets" / "schemas" / "decision-packet.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        Draft202012Validator.check_schema(schema)
+        schema_validator = Draft202012Validator(schema)
+        packet, _ = paid_audit_packet()
+        self.assertEqual(list(schema_validator.iter_errors(packet)), [])
+        packet["paid_audit"]["decisions"][0].pop("continuation")
+        self.assertTrue(list(schema_validator.iter_errors(packet)))
+
+
+class CreativeTestRotationTests(unittest.TestCase):
+    @staticmethod
+    def qualify(record, row, assessment="adequate"):
+        metrics = row["metrics"]["lifecycle"]
+        metrics.update(state="observed", source="synthetic lifecycle report")
+        for key, value in {"impressions": 450, "lpv": 45, "atc": 2, "checkout": 1, "purchase_value": 80,
+                           "cpa": None, "roas": None}.items():
+            metrics.setdefault(key, value)
+        record["performance_review"] = {
+            "window": "lifecycle", "assessment": assessment,
+            "observed": {key: metrics[key] for key in ("spend", "impressions", "lpv", "atc", "checkout", "purchases", "purchase_value", "cpa", "roas")},
+            "rationale": "Exact source has its own observed exposure.",
+            "counterevidence": "Result can backfill; no causal ranking follows.",
+        }
+
+    @classmethod
+    def qualified_watch(cls, packet, sweep):
+        record = next(record for record in packet["paid_audit"]["decisions"] if record["entity_id"] == "ad_069")
+        row = next(row for row in sweep["entities"] if row["ad_id"] == "ad_069")
+        cls.qualify(record, row)
+        row["metrics"]["last_3_closed"] = {"start_date": "2026-11-04", "end_date": "2026-11-06", "checkout": 1,
+                                              "state": "observed", "source": "synthetic daily report"}
+        condition = {"kind": "metric", "window": {"start_date": "2026-11-07", "end_date": "2026-11-07"},
+                     "metric": "checkout", "op": "eq", "value": 0, "source": "synthetic daily report"}
+        record["continuation"]["watch_contract"] = {
+            "basis": {"kind": "first_checkout", "window": {"start_date": "2026-11-04", "end_date": "2026-11-06"}},
+            "question": "Does the first checkout repeat in the next completed exposure window?",
+            "due_at": record["continuation"]["next_read_at"], "condition": condition,
+            "wait_cost": {"kind": "estimated_range", "currency": "TRY", "lower": 5, "upper": 45,
+                          "source": "Synthetic pacing scenario; not a spend cap"},
+        }
+        return record, row
+
+    @staticmethod
+    def rotation_packet(ad_id="ad_zero"):
+        packet, sweep = paid_audit_packet()
+        packet["plan"].update(exposure_direction="rotate", money_moving=True)
+        packet["decision"]["state"] = "act"
+        record = next(row for row in packet["paid_audit"]["decisions"] if row["entity_id"] == ad_id)
+        record.pop("continuation", None)
+        record.update(disposition="rotate", action_review={
+            "rationale": "Assess this exact test creative for an approval-gated rotation.",
+            "counterevidence": "Other creatives in the set may receive the allocation.",
+            "parent_effect": "The parent budget remains unchanged.",
+            "next_read_at": "2026-11-08T15:00:00+03:00",
+        })
+        row = next(item for item in sweep["entities"] if item["ad_id"] == ad_id)
+        if ad_id == "ad_zero":
+            CreativeTestRotationTests.qualified_watch(packet, sweep)
+        else:
+            CreativeTestRotationTests.qualify(record, row)
+        return packet, sweep, record, row
+
+    @classmethod
+    def post_rotation_packet(cls):
+        packet, sweep, record, row = cls.rotation_packet()
+        packet["scope"]["timezone"] = sweep["scope"]["timezone"] = "America/Chicago"
+        row["current_paid_delivery"] = record["observed_paid_delivery"] = True
+        row["metrics"]["lifecycle"].update(spend=12.5, purchases=0)
+        cls.qualify(record, row)
+        row["ad_day_observations"] = [{"date": "2026-11-05", "spend": 12.5, "purchases": 0}]
+        anchor = {
+            **{key: row[key] for key in ("account_id", "campaign_id", "parent_id", "epoch_id")},
+            "ad_id": "paused_sibling",
+        }
+        sweep["entities"].append({
+            **anchor, "binding_verified": True, "configured_status": "PAUSED", "effective_status": "PAUSED",
+            "disposition": "historical", "coverage_state": "observed", "current_paid_delivery": False,
+        })
+        application = {
+            "verified": True, "native_status_matches_applied": True,
+            "record": {
+                **anchor, "action": "pause", "status": "applied_verified",
+                "applied_at": "2026-11-05T03:15:00Z", "source": "synthetic mutation journal",
+                "readback": {
+                    **anchor, "read_at": "2026-11-05T03:20:00Z", "independent": True,
+                    "configured_status": "PAUSED", "effective_status": "PAUSED",
+                    "source": "synthetic independent Meta status read",
+                },
+            },
+        }
+        sweep["decision_handoff"] = {"applications": [application]}
+        basis = {
+            "kind": "observed_post_rotation", "anchor_ad_id": anchor["ad_id"],
+            "window_start": "2026-11-05", "window_end": "2026-11-06",
+            "rationale": "The target spent in a closed account day after its sibling was verified paused.",
+            "evidence_ids": ["e1"],
+        }
+        record["action_review"]["creative_test_basis"] = basis
+        return packet, sweep, row, application, basis
+
+    def assert_creative_test_basis_error(self, packet, sweep, **options):
+        errors, _ = validator.validate(packet, paid_sweep=sweep, **options)
+        self.assertTrue(any("creative_test_basis" in error for error in errors), errors)
+
+    def test_creative_test_requires_a_basis_without_changing_ordinary_review(self) -> None:
+        packet, sweep, _, _ = self.rotation_packet()
+        self.assertEqual(validator.validate(packet, paid_sweep=sweep), ([], []))
+        self.assert_creative_test_basis_error(packet, sweep, creative_test=True)
+        packet["paid_audit"]["decision_context"] = "creative_test"
+        self.assert_creative_test_basis_error(packet, sweep)
+
+    def test_previous_pause_cannot_remain_awaiting_approval_for_current_watch(self) -> None:
+        packet, sweep = paid_audit_packet()
+        self.qualified_watch(packet, sweep)
+        pending = {"remaining_reason": "awaiting_approval", "proposal": {"ad_id": "ad_069", "action": "pause"}}
+        sweep["decision_handoff"] = {"remaining_proposals": [pending]}
+        errors, _ = validator.validate(packet, paid_sweep=sweep, creative_test=True)
+        self.assertTrue(any("ad_069 cannot remain awaiting approval" in error for error in errors), errors)
+        pending["remaining_reason"] = "rejected"
+        self.assertEqual(validator.validate(packet, paid_sweep=sweep, creative_test=True), ([], []))
+
+    def test_own_performance_basis_requires_positive_sourced_spend_and_evidence(self) -> None:
+        packet, sweep, record, row = self.rotation_packet("ad_069")
+        row["metrics"]["lifecycle"].update(state="observed", source="synthetic lifecycle report")
+        basis = {
+            "kind": "observed_ad_performance", "metric_window": "lifecycle",
+            "rationale": "The ad's own sourced lifecycle includes paid exposure and one credit.",
+            "evidence_ids": ["e1"],
+        }
+        record["action_review"]["creative_test_basis"] = basis
+        self.assertEqual(validator.validate(packet, paid_sweep=sweep, creative_test=True), ([], []))
+        for window in ("last_3_closed", "partial_day"):
+            with self.subTest(window=window):
+                basis["metric_window"] = window
+                self.assert_creative_test_basis_error(packet, sweep, creative_test=True)
+        basis["metric_window"] = "lifecycle"
+        row["metrics"]["lifecycle"]["spend"] = 0
+        self.assert_creative_test_basis_error(packet, sweep, creative_test=True)
+        row["metrics"]["lifecycle"]["spend"] = 216.73
+        basis["evidence_ids"] = ["unbound"]
+        self.assert_creative_test_basis_error(packet, sweep, creative_test=True)
+        basis["evidence_ids"] = ["e1"]
+        basis["rationale"] = " "
+        self.assert_creative_test_basis_error(packet, sweep, creative_test=True)
+
+    def test_verified_destination_issue_allows_rotation_without_paid_delivery(self) -> None:
+        packet, sweep, record, row = self.rotation_packet()
+        packet["paid_audit"]["decision_context"] = "creative_test"
+        packet["evidence"][0]["claim"] = "An independent request verifies a broken destination for ad_zero."
+        basis = {
+            "kind": "verified_independent_issue", "issue_type": "destination", "event_id": "destination-read-1",
+            "rationale": "The exact ad destination independently returned an invalid redirect.",
+            "evidence_ids": ["e1"],
+        }
+        record["action_review"]["creative_test_basis"] = basis
+        self.assert_creative_test_basis_error(packet, sweep)
+        sweep["creative_evidence_events"] = [{
+            **{key: row[key] for key in ("account_id", "campaign_id", "parent_id", "ad_id", "epoch_id")},
+            "id": "destination-read-1", "event_type": "destination", "state": "confirmed", "verified": True,
+            "source": "independent synthetic destination read", "observed_at": sweep["scope"]["as_of"],
+            "occurred_at": sweep["scope"]["as_of"],
+        }]
+        self.assertEqual(validator.validate(packet, paid_sweep=sweep), ([], []))
+        sweep["creative_evidence_events"][0]["observed_at"] = "2026-11-08T15:00:00+03:00"
+        self.assert_creative_test_basis_error(packet, sweep)
+        sweep["creative_evidence_events"][0]["observed_at"] = sweep["scope"]["as_of"]
+        basis["issue_type"] = "anticipated_budget_concentration"
+        self.assert_creative_test_basis_error(packet, sweep)
+
+    def test_post_rotation_requires_verified_same_parent_pause_and_independent_readback(self) -> None:
+        packet, sweep, _, _, _ = self.post_rotation_packet()
+        self.assertEqual(validator.validate(packet, paid_sweep=sweep, creative_test=True), ([], []))
+
+        for layer, field, value in (
+            ("application", "verified", False),
+            ("application", "native_status_matches_applied", False),
+            ("record", "action", "activate"),
+            ("record", "parent_id", "other_set"),
+            ("readback", "independent", False),
+            ("readback", "effective_status", "ACTIVE"),
+            ("readback", "read_at", None),
+        ):
+            with self.subTest(layer=layer, field=field):
+                packet, sweep, _, application, _ = self.post_rotation_packet()
+                records = {"application": application, "record": application["record"],
+                           "readback": application["record"]["readback"]}
+                records[layer][field] = value
+                self.assert_creative_test_basis_error(packet, sweep, creative_test=True)
+
+        packet, sweep, _, _, _ = self.post_rotation_packet()
+        sweep["decision_handoff"]["applications"].clear()
+        self.assert_creative_test_basis_error(packet, sweep, creative_test=True)
+
+    def test_post_rotation_excludes_pause_day_partial_day_and_zero_spend(self) -> None:
+        # The UTC Nov 5 readback occurred on Nov 4 in Chicago.
+        for start, end, report_day, spend in (
+            ("2026-11-04", "2026-11-06", "2026-11-04", 12.5),
+            ("2026-11-05", "2026-11-07", "2026-11-07", 12.5),
+            ("2026-11-05", "2026-11-06", "2026-11-04", 12.5),
+            ("2026-11-05", "2026-11-06", "2026-11-05", 0),
+        ):
+            with self.subTest(start=start, end=end, report_day=report_day, spend=spend):
+                packet, sweep, row, _, basis = self.post_rotation_packet()
+                basis.update(window_start=start, window_end=end)
+                row["ad_day_observations"] = [{"date": report_day, "spend": spend, "purchases": 0}]
+                self.assert_creative_test_basis_error(packet, sweep, creative_test=True)
+
+
 if __name__ == "__main__":
     unittest.main()

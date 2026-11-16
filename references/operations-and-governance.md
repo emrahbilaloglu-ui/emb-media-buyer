@@ -72,6 +72,8 @@ Use complete equivalent windows. Reconcile platform, business, and causal ledger
 
 For a WBR, use the canonical contract in `references/account-review-and-optimization.md` and route the next action to its actual owner.
 
+For a recurring review that decides on active paid ads, run the read-only gate in `references/paid-decision-sweep.md` before publishing a complete decision report. Archive its scoped sources, full ledger, and previous/open decisions; verify the paid packet against that artifact. A top-N message, successful process exit, or provider receipt alone does not close the review. This is a contract for the current cadence, not a request to create or alter a schedule.
+
 ### Strategic reviews
 
 Revisit targets, customer/market mix, channel role, response curves, incrementality, MMM/experiments, creative/offer roadmap, measurement debt, platform dependency, and forecast scenarios.

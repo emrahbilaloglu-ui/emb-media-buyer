@@ -94,6 +94,10 @@ For a material KEEP/WATCH or hold that leaves paid delivery active, give a compa
 
 If continuation lacks a defensible basis, recommend a scoped pause or rotation and expose any execution authority gap. Do not renew WATCH merely because the entity once purchased, has fresh carts, lacks a proven replacement, or has unknown margin. Fresh sales are real counterevidence, not automatic protection. Low-spend rows remain undecided unless other evidence supports a decision. Small connection/status queries do not need this paid-decision record.
 
+In an active paid audit, carry this forward in the structured paid decision and handoff records in references/paid-decision-sweep.md. A paid HOLD is still delivery until a fresh native read proves otherwise. A rebind or new partial-day purchase does not erase cumulative ad-ID exposure or silently close an older recommendation.
+
+For creative TEST, freeze the prior WATCH rather than copying its rationale forward. The next read evaluates its condition and exposure bound from the same native ad and treatment. When the prior decision is due or triggered, a fresh measurement-backed reason is required to fund another interval. A genuine first checkout may buy one explicit check, not immunity against a cut; a later isolated credit does not erase cumulative cost or clean comparison windows. If prior evidence is missing, identify the unresolved scope and put it in the review plan rather than inventing a `pending` state.
+
 ### Allocation and financial consequence
 
 State whether a change increases exposure, reduces it, rotates delivery within existing budgets, or continues it. Pausing one shared-budget ad can redirect delivery to siblings without reducing total spend; neither redirection, equal allocation, superior results, nor savings is guaranteed. Past spend is not recoverable cash. Check the incumbent and alternatives separately.

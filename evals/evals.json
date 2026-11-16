@@ -1,6 +1,6 @@
 {
   "skill_name": "emb-media-buyer",
-  "version": "1.3",
+  "version": "1.4",
   "cases": [
     {
       "id": "platform-roas-vs-store-truth",
@@ -791,6 +791,42 @@
         "Require a large paid-continuation form for the small status query",
         "Treat structural PASS as proof of economic optimality, profitability, policy approval, or actual serving"
       ]
+    },
+    {
+      "id": "paid-sweep-equal-totals-missing-id",
+      "prompt": "Audit decisions for a TEST campaign. An independent inventory lists 140 active ads; a paginated six-day report observed 138, but campaign totals match. The collector omits launch days and the console shows only the top 20. The two absent IDs had low exposure at the previous read. A separate explicit click-only winner report filters purchases below three. Can we close the paid decision review?",
+      "expected_behaviors": ["Run the separate paid sweep with the native expected ID set and full lifecycle/ad-day data; keep the scope incomplete until missing coverage is resolved", "Retain all active and historical IDs and two full candidate lanes including one/two-credit positives and spend with zero credited outcomes", "Keep explicit click-only, unified attribution, partial-day and later-as-of results distinct"],
+      "forbidden_behaviors": ["Infer zero spend or outcomes from missing rows or equal aggregate totals", "Use top-N, recent spend or a minimum purchase count to define the population", "Use a later snapshot as evidence known at the earlier review"]
+    },
+    {
+      "id": "paid-sweep-value-count-and-partial-day",
+      "prompt": "At equal $210 spend, A has one verified $400 platform purchase, B has three for $90, C has one with no value/currency, and D shows a purchase-value key but zero canonical purchases. E first received one credit on today's partial report. The next-day read revised an earlier impression day. Review both decision lanes.",
+      "expected_behaviors": ["Keep all IDs and explain count/value differences with compatible definitions", "Separate verified zero, VALUE_UNVERIFIED, and COUNT_VALUE_CONFLICT; leave undefined ratios null", "Compare full, 7/3 closed and partial windows and separate backfill from fresh delivery and merchant orders"],
+      "forbidden_behaviors": ["Automatically KEEP any purchase-present row", "Count value with missing currency as verified zero, or add canonical and alias purchases", "Treat a partial-day credit or higher count as automatic priority or profit"]
+    },
+    {
+      "id": "paid-sweep-open-decisions-epoch-and-recovery",
+      "prompt": "Yesterday A and B were proposed pauses; there is no readback for B. C was WATCH after a first order but added $158 and no credit. D had a comparable $94.48 and $440 attributed value on two new credits. E changed offer and landing midday; F only changed UTM. G reused E's media on a different native ad ID. Produce the recurring decision handoff.",
+      "expected_behaviors": ["Carry or explicitly resolve each open recommendation using exact binding and as-of; don't claim B applied", "Reassess C without first-order immunity and consider resolving D with new counterevidence", "Separate lifetime and clean treatment windows, mark mixed day, keep measurement history and cross-ID evidence separate"],
+      "forbidden_behaviors": ["Omit an unresolved proposal, carry generic WATCH, or declare first read after prior history", "Treat the binding timestamp as first delivery or mixed-day outcomes as pure V2", "Copy decision, status or authorization to a new ID using media alone"]
+    },
+    {
+      "id": "paid-sweep-hold-none-and-batch-parent",
+      "prompt": "The active-ad audit has a confirmed paid HOLD and an old continuation of ten identical placeholder strings. The owner separately authorized status-only pauses for A/B, the last eligible children of set S. A candidate in another set is labeled MAIN; an unrelated active row is missing from the report. Return an auditable plan.",
+      "expected_behaviors": ["Reject filler and paid HOLD/none; show sourced observations, new rationale and dated next read for continued exposure", "Show incomplete full scope while treating the independently verified, exact approved risk reduction as a separate action", "Compute the batch leaving S empty; preserve parent status and distinguish actual promotion from a candidate"],
+      "forbidden_behaviors": ["Call a partial sweep complete or give full-sweep candidate ranking execution authority", "Treat child approval as parent shutdown, budget or refill authority", "Publish a blanket cutoff or reuse nominal budget as cash savings"]
+    },
+    {
+      "id": "creative-test-watch-phrase-change-is-not-evidence",
+      "prompt": "A paid creative has 178 LPV lifetime and 142 over three clean days with zero carts, checkouts and purchases. Its prior WATCH was due; paid exposure continued. Marketplace generated many of the LPV, but there is no independently verified measurement failure. The reviewer appends 'check again tomorrow' and marks a previously met trigger pending. A different ad has a real first checkout and a third has minimal own delivery. Produce the next decision review.",
+      "expected_behaviors": ["Assess the exposed ad's own failure to progress and make an explicit reversible recommendation or unresolved decision before parent allocation effects", "Resolve the frozen WATCH against verified data, not wording; separately assess first checkout and low own exposure with bounded questions", "Keep the proposed decision, separate approval, and actual read-back distinct"],
+      "forbidden_behaviors": ["Assign WATCH to every paid ad omitted from the cut list", "Treat Marketplace hypothesis as proven break or new prose as evidence", "Give a checkout automatic immunity or invent a universal cut threshold"]
+    },
+    {
+      "id": "creative-test-frozen-credit-disagreement-and-manual-state",
+      "prompt": "Two reviewers disagree on a single-child TEST ad with one genuine high-value click credit but $345 of earlier clean-window spend without new checkout or purchase; its older WATCH is due. A second source just crossed a verified treatment change and only mixed-day data is present. Later archive rows show other ads manually paused. Give an as-of review and a separately dated retrospective.",
+      "expected_behaviors": ["Keep both scoped opinions and the verified high-value credit; use outlier-trimming only as sensitivity and disclose earlier clean-window exposure", "Bound a genuinely pending first clean observation, and force re-decision when observed evidence or exposure meets its condition", "Keep later manual pauses and write authority out of the earlier recommendation evidence"],
+      "forbidden_behaviors": ["Invent consensus, discard an actual credit, or use a missing replacement as an analytical veto", "Reset cumulative or prior clean exposure after one credit, or count visits and credits as independent sales", "Retroactively turn a later PAUSED read into an earlier applied decision"]
     }
   ]
 }

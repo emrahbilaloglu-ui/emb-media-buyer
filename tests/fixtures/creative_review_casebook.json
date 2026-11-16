@@ -1,0 +1,22 @@
+{
+  "purpose": "Synthetic normalized provider-like rows inspired by recurring creative review failure modes; no account, customer, or provider IDs",
+  "as_of": "2026-11-16T14:00:00Z",
+  "days": ["2026-11-12", "2026-11-13", "2026-11-14", "2026-11-15", "2026-11-16"],
+  "daily_columns": ["spend", "impressions", "lpv", "atc", "checkout", "purchases", "purchase_value"],
+  "cases": [
+    {"id":"P4-200","parent":"alpha","intent":"cut_candidate","daily":[[42,350,33,0,0,0,0],[29,450,50,0,0,0,0],[33,400,42,0,0,0,0],[53,420,39,0,0,0,0],[19,173,14,0,0,0,0]]},
+    {"id":"P2-082","parent":"alpha","intent":"cut_candidate","daily":[[164,1500,52,5,1,2,323],[103,600,35,3,0,0,0],[105,640,40,2,0,0,0],[124,700,44,4,0,0,0],[39,250,18,1,0,0,0]]},
+    {"id":"P4-137","parent":"beta","intent":"cut_candidate","daily":[[34,200,19,2,0,0,0],[58,300,23,5,0,0,0],[49,290,21,8,0,0,0],[66,420,29,6,0,0,0],[23,126,12,2,0,0,0]]},
+    {"id":"P2-053","parent":"beta","intent":"cut_candidate","daily":[[1302,12000,260,20,4,7,1449],[121,900,50,3,0,0,0],[138,900,53,5,1,0,0],[200,1700,68,5,0,0,0],[191,1500,50,3,0,0,0]],"merchant_evidence":{"kind":"visit_association","value":200,"currency":"USD","source":"separate synthetic merchant snapshot","strict_order_binding":false}},
+    {"id":"P2-067","parent":"alexis","intent":"disagreement","daily":[[182,900,19,2,1,1,867],[100,700,36,1,0,0,0],[109,740,42,2,0,0,0],[182,1800,45,1,0,0,0],[23,210,18,0,0,0,0]],"merchant_evidence":{"kind":"visit_association","value":867,"currency":"USD","source":"separate synthetic merchant snapshot","strict_order_binding":false}},
+    {"id":"P4-195","parent":"sarah","intent":"first_clean_window","epoch_started_at":"2026-11-15T14:00:00Z","daily":[[61,350,30,1,1,0,0],[69,400,30,2,1,1,111],[14,700,55,0,0,0,0],[85,4350,265,0,0,0,0],[11,319,20,0,0,0,0]]},
+    {"id":"P4-142","parent":"alpha","intent":"first_checkout","daily":[[60,400,19,0,0,0,0],[49,370,14,0,0,0,0],[35,280,12,0,0,0,0],[39,300,15,2,1,0,0],[37,230,12,0,0,0,0]]},
+    {"id":"P4-052","parent":"gamma","intent":"low_opportunity","daily":[[8,48,2,0,0,0,0],[4,25,1,0,0,0,0],[1,9,1,0,0,0,0],[2,15,1,0,0,0,0],[0,0,0,0,0,0,0]]},
+    {"id":"P4-053","parent":"gamma","intent":"low_opportunity","daily":[[5,35,2,0,0,0,0],[3,19,1,0,0,0,0],[0,0,0,0,0,0,0],[3,22,1,0,0,0,0],[1,5,0,0,0,0,0]]},
+    {"id":"new-partial","parent":"gamma","intent":"low_opportunity","lifecycle_start":"2026-11-16","epoch_started_at":"2026-11-16T12:45:00Z","daily":[[6,25,2,0,0,0,0]]},
+    {"id":"high-value","parent":"sarah","intent":"linked_credit","daily":[[85,590,20,1,0,0,0],[92,680,27,2,1,1,190],[115,750,30,2,3,1,1850],[129,950,37,2,0,0,0],[82,450,19,0,0,0,0]],"merchant_evidence":{"kind":"possibly_same_cross_visit","value":1850,"currency":"USD","source":"separate synthetic merchant snapshot","strict_order_binding":false}},
+    {"id":"existing-manual","parent":"gamma","intent":"manual_paused","status":"PAUSED","daily":[[50,200,20,1,0,0,0],[52,240,22,1,0,0,0],[51,230,21,2,0,0,0],[17,80,9,0,0,0,0],[0,0,0,0,0,0,0]]},
+    {"id":"proven-main","parent":"beta","intent":"main_retained","daily":[[66,410,30,5,2,1,240],[57,320,24,3,1,0,0],[67,380,27,3,2,1,210],[78,480,36,5,3,3,660],[34,200,14,2,1,1,270]]},
+    {"id":"observed-zero","parent":"gamma","intent":"zero_exposure","daily":[[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]]}
+  ]
+}
