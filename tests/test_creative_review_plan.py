@@ -24,7 +24,7 @@ def synthetic_sweep(book, *, first=False):
     days, columns = book["days"][:3] if first else book["days"], book["daily_columns"]
     scope = {"platform":"synthetic", "account_id":"test-account", "campaign_id":"test-campaign", "currency":"USD",
              "timezone":"America/Chicago", "as_of":as_of, "attribution":"7d click / 1d view", "report_time":"impression", "lifecycle_start":days[0]}
-    cases = [item for item in book["cases"] if not first or item["id"] in {"P2-082", "P4-200"}]
+    cases = [item for item in book["cases"] if not first or item["id"] in {"old-credit-awaiting", "unproductive-incumbent"}]
     mapping = {"count_action_type":"canonical", "value_action_type":"canonical-value", "evidence":"synthetic action mapping",
                "value_currency":"USD", "missing_count_is_zero":True, "missing_value_for_zero_count_is_zero":True}
 
@@ -76,20 +76,20 @@ def sample_payload(*, resolve_disagreement=False):
     def binding(ad_id):
         return {key:epoch_by_id[ad_id][key] for key in BINDING}
 
-    first_proposal = {**binding("P2-082"), "action":"pause", "proposed_at":prior_as_of, "proposal_source":"synthetic original review",
+    first_proposal = {**binding("old-credit-awaiting"), "action":"pause", "proposed_at":prior_as_of, "proposal_source":"synthetic original review",
                       "snapshot_source":"lifecycle-prior"}
     snapshot["decision_handoff"] = {"complete_for_decision":True, "decisions":[{"binding":binding("proven-main"), "main_retained":True}],
                                     "remaining_proposals":[{"proposal":first_proposal, "remaining_reason":"awaiting_approval"}]}
     snapshot["creative_evidence_events"] = [{**binding("high-value"), "id":"verified-click-credit", "event_type":"click_credit", "source":"native click credit fixture",
                                              "verified":True, "observed_at":"2026-11-16T12:00:00Z", "occurred_at":"2026-11-14T16:00:00Z",
-                                             "report_date":"2026-11-14", "state":"observed", "value":1850, "currency":"USD", "credit_type":"click",
+                                             "report_date":"2026-11-14", "state":"observed", "value":1735, "currency":"USD", "credit_type":"click",
                                              "attribution_window":"explicit 7d click"}]
     plan = {"paid_sweep":snapshot, "adjudications":[], "first_proposals":[first_proposal], "prior_sweeps":[prior], "evidence_ids":["frozen-census"]}
     plan["manual_pauses"] = [{**binding("existing-manual"), "actor_type":"owner_manual", "source":"activity log fixture", "applied_at":"2026-11-15T14:00:00Z",
                               "readback":{**binding("existing-manual"), "source":"independent native object fixture", "independent":True,
                                           "read_at":"2026-11-15T14:05:00Z", "configured_status":"PAUSED", "effective_status":"PAUSED"}}]
     if not resolve_disagreement:
-        plan["decision_views"] = [{**binding("P2-067"), "reviewer":reviewer, "observed_at":as_of,
+        plan["decision_views"] = [{**binding("review-disagreement"), "reviewer":reviewer, "observed_at":as_of,
                                   "platform_snapshot_source":"lifecycle-current", "merchant_snapshot_source":"separate synthetic merchant snapshot",
                                   "disposition":disposition, "rationale":rationale}
                                   for reviewer,disposition,rationale in [
@@ -173,58 +173,58 @@ def final_packet(result):
 class CreativeReviewPlanTests(unittest.TestCase):
     def test_no_fallback_for_unreviewed_paid_or_disagreeing_row_and_top_is_display_only(self):
         payload = sample_payload()
-        payload["adjudications"] = [row for row in payload["adjudications"] if row["ad_id"] != "P4-200"]
+        payload["adjudications"] = [row for row in payload["adjudications"] if row["ad_id"] != "unproductive-incumbent"]
         result = build_plan(payload, top=1)
         rows = by_id(result)
         self.assertEqual(len(rows), 14)
-        self.assertEqual(rows["P4-200"]["issues"], ["missing_explicit_adjudication"])
-        self.assertEqual(rows["P4-200"]["disposition"], "unresolved")
-        self.assertIn("P4-200", result["candidate_lanes"]["zero_purchase_by_recent_and_lifecycle_spend"])
+        self.assertEqual(rows["unproductive-incumbent"]["issues"], ["missing_explicit_adjudication"])
+        self.assertEqual(rows["unproductive-incumbent"]["disposition"], "unresolved")
+        self.assertIn("unproductive-incumbent", result["candidate_lanes"]["zero_purchase_by_recent_and_lifecycle_spend"])
         self.assertEqual(len(result["summary"]["top"]["zero_purchase_by_recent_and_lifecycle_spend"]), 1)
-        self.assertEqual({view["disposition"] for view in rows["P2-067"]["same_snapshot_views"]}, {"watch", "cut_candidate"})
-        self.assertEqual(rows["P2-067"]["disposition"], "unresolved")
+        self.assertEqual({view["disposition"] for view in rows["review-disagreement"]["same_snapshot_views"]}, {"watch", "cut_candidate"})
+        self.assertEqual(rows["review-disagreement"]["disposition"], "unresolved")
         self.assertFalse(result["packet_eligible"])
         self.assertIsNone(result["paid_audit"])
 
     def test_cuts_waiting_exposure_and_batch_effect_are_separate(self):
         result = build_plan(sample_payload())
         rows = by_id(result)
-        self.assertEqual(set(result["cut_recommendation_ids"]), {"P4-200","P2-082","P4-137","P2-053"})
-        self.assertEqual(rows["P2-082"]["proposal_status"], "awaiting_approval")
-        self.assertEqual(rows["P2-082"]["first_proposal_exposure"]["wait_hours"], 48)
-        self.assertEqual(rows["P2-082"]["first_proposal_exposure"]["observed_platform_spend_delta"], 163)
+        self.assertEqual(set(result["cut_recommendation_ids"]), {"unproductive-incumbent","old-credit-awaiting","cart-heavy-stall","old-winner-declining"})
+        self.assertEqual(rows["old-credit-awaiting"]["proposal_status"], "awaiting_approval")
+        self.assertEqual(rows["old-credit-awaiting"]["first_proposal_exposure"]["wait_hours"], 48)
+        self.assertEqual(rows["old-credit-awaiting"]["first_proposal_exposure"]["observed_platform_spend_delta"], 163)
         alpha = next(row for row in result["parent_effects"] if row["parent_id"] == "alpha")
-        self.assertEqual(alpha["proposed_pause_ids"], ["P2-082","P4-200"])
-        self.assertEqual(alpha["remaining_eligible_ids"], ["P4-142"])
+        self.assertEqual(alpha["proposed_pause_ids"], ["old-credit-awaiting","unproductive-incumbent"])
+        self.assertEqual(alpha["remaining_eligible_ids"], ["first-checkout"])
         self.assertEqual(alpha["redistribution"], "not yet observed")
         self.assertEqual(result["execution_authority"], "not_granted_by_plan")
 
     def test_bounded_watches_keep_real_checkout_limited_opportunity_and_mixed_day_distinct(self):
         rows = by_id(build_plan(sample_payload()))
-        self.assertEqual(rows["P4-142"]["watch_evaluation"]["verified_fact"]["kind"], "first_checkout")
-        self.assertEqual(rows["P4-195"]["watch_evaluation"]["verified_fact"]["kind"], "first_clean_window")
-        self.assertEqual(rows["P4-195"]["metrics"]["current_epoch"]["start_date"], "2026-11-16")
-        for ad_id in ("P4-052","P4-053","new-partial"):
+        self.assertEqual(rows["first-checkout"]["watch_evaluation"]["verified_fact"]["kind"], "first_checkout")
+        self.assertEqual(rows["mixed-treatment-day"]["watch_evaluation"]["verified_fact"]["kind"], "first_clean_window")
+        self.assertEqual(rows["mixed-treatment-day"]["metrics"]["current_epoch"]["start_date"], "2026-11-16")
+        for ad_id in ("limited-opportunity-a","limited-opportunity-b","new-partial"):
             self.assertEqual(rows[ad_id]["disposition"], "low_opportunity", rows[ad_id]["issues"])
         self.assertEqual(rows["observed-zero"]["disposition"], "zero_exposure")
         large = rows["high-value"]
         self.assertEqual(large["watch_evaluation"]["verified_fact"]["kind"], "material_credit")
-        self.assertEqual(large["metrics"]["lifecycle"]["purchase_value"], 2040)
-        self.assertEqual(large["merchant_evidence"]["value"], 1850)
+        self.assertEqual(large["metrics"]["lifecycle"]["purchase_value"], 1925)
+        self.assertEqual(large["merchant_evidence"]["value"], 1735)
         self.assertAlmostEqual(large["platform_credit_sensitivity"]["sensitivity_roas_without_credit"], 190 / 503)
 
     def test_bad_bindings_and_manual_activity_without_independent_read_cannot_export(self):
         payload = sample_payload(resolve_disagreement=True)
-        wrong = next(row for row in payload["adjudications"] if row["ad_id"] == "P4-200")
+        wrong = next(row for row in payload["adjudications"] if row["ad_id"] == "unproductive-incumbent")
         wrong["epoch_id"] = "stale-epoch"
-        another = next(row for row in payload["adjudications"] if row["ad_id"] == "P4-137")
+        another = next(row for row in payload["adjudications"] if row["ad_id"] == "cart-heavy-stall")
         another["ad_id"] = "outside-census"
         payload["manual_pauses"][0]["readback"]["independent"] = False
         result = build_plan(payload)
         rows = by_id(result)
-        self.assertNotIn("P4-200", result["cut_recommendation_ids"])
-        self.assertIn("adjudication_not_bound_to_current_id_epoch_and_asof", rows["P4-200"]["issues"])
-        self.assertEqual(rows["P4-137"]["disposition"], "unresolved")
+        self.assertNotIn("unproductive-incumbent", result["cut_recommendation_ids"])
+        self.assertIn("adjudication_not_bound_to_current_id_epoch_and_asof", rows["unproductive-incumbent"]["issues"])
+        self.assertEqual(rows["cart-heavy-stall"]["disposition"], "unresolved")
         self.assertEqual(rows["existing-manual"]["disposition"], "unresolved")
         self.assertFalse(result["packet_eligible"])
 
@@ -242,38 +242,38 @@ class CreativeReviewPlanTests(unittest.TestCase):
 
     def test_paid_metric_forgery_and_wait_anchor_future_fail(self):
         payload = sample_payload(resolve_disagreement=True)
-        row = next(row for row in payload["adjudications"] if row["ad_id"] == "P4-200")
+        row = next(row for row in payload["adjudications"] if row["ad_id"] == "unproductive-incumbent")
         row["performance_review"]["observed"]["checkout"] = 4
         payload["first_proposals"][0] = {**payload["first_proposals"][0], "snapshot_as_of":"2026-11-16T14:00:00Z"}
         result = build_plan(payload)
-        self.assertIn("performance_review.observed.checkout must match the chosen sweep window", by_id(result)["P4-200"]["issues"])
-        wait = by_id(result)["P2-082"]["first_proposal_exposure"]
+        self.assertIn("performance_review.observed.checkout must match the chosen sweep window", by_id(result)["unproductive-incumbent"]["issues"])
+        wait = by_id(result)["old-credit-awaiting"]["first_proposal_exposure"]
         self.assertEqual(wait["state"], "wait_only")
         self.assertIsNone(wait["observed_platform_spend_delta"])
         self.assertFalse(result["packet_eligible"])
 
     def test_projected_paid_audit_validates_strict_with_same_history(self):
         payload = sample_payload(resolve_disagreement=True)
-        payload["creative_history"] = history_attachment(payload, "P2-082")
+        payload["creative_history"] = history_attachment(payload, "old-credit-awaiting")
         result = build_plan(payload)
         self.assertTrue(result["packet_eligible"], result["issues"])
         errors, warnings = validate(final_packet(result), paid_sweep=payload["paid_sweep"], creative_test=True,
                                     creative_history=payload["creative_history"])
         self.assertEqual(errors + warnings, [])
 
-    def test_frozen_met_trigger_cannot_renew_with_same_unproven_p4_200_watch(self):
+    def test_frozen_met_trigger_cannot_renew_with_same_unproven_unproductive_watch(self):
         payload = sample_payload(resolve_disagreement=True)
-        row = next(row for row in payload["adjudications"] if row["ad_id"] == "P4-200")
-        new_watch = deepcopy(next(item for item in payload["adjudications"] if item["ad_id"] == "P4-142")["continuation"])
+        row = next(row for row in payload["adjudications"] if row["ad_id"] == "unproductive-incumbent")
+        new_watch = deepcopy(next(item for item in payload["adjudications"] if item["ad_id"] == "first-checkout")["continuation"])
         old_watch = deepcopy(new_watch["watch_contract"])
         old_watch["due_at"] = "2026-11-15T21:00:00Z"
         old_watch["condition"]["window"] = {"start_date":"2026-11-14", "end_date":"2026-11-14"}
-        payload["creative_history"] = history_attachment(payload, "P4-200", {"next_read_at":old_watch["due_at"], "watch_contract":old_watch})
+        payload["creative_history"] = history_attachment(payload, "unproductive-incumbent", {"next_read_at":old_watch["due_at"], "watch_contract":old_watch})
         new_watch["rationale"] += " Same check continues."
         new_watch["trigger"]["state"] = "pending"
         row.update(disposition="watch", continuation=new_watch)
         result = build_plan(payload)
-        reviewed = by_id(result)["P4-200"]
+        reviewed = by_id(result)["unproductive-incumbent"]
         self.assertEqual(reviewed["watch_evaluation"]["prior_trigger_state"], "met")
         self.assertIn("watch_trigger_must_match_derived_observation", reviewed["issues"])
         self.assertEqual(reviewed["disposition"], "unresolved")
